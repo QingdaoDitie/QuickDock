@@ -1,0 +1,33 @@
+<UserControl x:Class="QuickDock.Controls.DockItemControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             SizeChanged="OnSizeChanged">
+    <Button Style="{StaticResource DockItemButtonStyle}"
+            Click="OnButtonClick"
+            ToolTip="{Binding Name}">
+        <Grid>
+            <Border x:Name="IconBorder"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center">
+                <Rectangle x:Name="IconRect"
+                           RadiusX="6"
+                           RadiusY="6">
+                    <Rectangle.Fill>
+                        <ImageBrush x:Name="ItemIconBrush"
+                                    Stretch="Uniform"/>
+                    </Rectangle.Fill>
+                </Rectangle>
+            </Border>
+            
+            <TextBlock x:Name="FallbackText"
+                       Text="{Binding Name}"
+                       FontSize="10"
+                       TextTrimming="CharacterEllipsis"
+                       TextWrapping="NoWrap"
+                       HorizontalAlignment="Center"
+                       VerticalAlignment="Center"
+                       Foreground="{StaticResource TextBrush}"
+                       Visibility="Collapsed"/>
+        </Grid>
+    </Button>
+</UserControl>
