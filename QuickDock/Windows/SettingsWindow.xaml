@@ -82,18 +82,51 @@
         </Grid>
 
         <Grid Grid.Row="2" Margin="0,15,0,0">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto"/>
-                <ColumnDefinition Width="*"/>
-            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
             
-            <CheckBox Grid.Column="0"
-                      x:Name="AutoStartCheckBox"
-                      Content="Start with Windows" 
-                      Style="{StaticResource CheckBoxStyle}"
-                      Checked="OnAutoStartChanged"
-                      Unchecked="OnAutoStartChanged"
-                      VerticalAlignment="Center"/>
+            <Border Grid.Row="0" 
+                    Background="#2a2a2a" 
+                    Padding="12,8" 
+                    CornerRadius="4"
+                    Cursor="Hand"
+                    MouseLeftButtonDown="OnAutoStartClick">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    
+                    <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                        <TextBlock Text="开机自启" 
+                                   FontSize="14" 
+                                   FontWeight="Medium"
+                                   Foreground="#e0e0e0"/>
+                        <TextBlock Text="启动 Windows 时自动运行 QuickDock" 
+                                   FontSize="11" 
+                                   Foreground="#888"
+                                   Margin="0,2,0,0"/>
+                    </StackPanel>
+                    
+                    <Border Grid.Column="1" 
+                            x:Name="AutoStartToggle"
+                            Width="44" 
+                            Height="24" 
+                            Background="#444"
+                            CornerRadius="12"
+                            VerticalAlignment="Center">
+                        <Border x:Name="AutoStartToggleKnob"
+                                Width="20" 
+                                Height="20" 
+                                Background="#888"
+                                CornerRadius="10"
+                                HorizontalAlignment="Left"
+                                Margin="2,0"/>
+                    </Border>
+                </Grid>
+            </Border>
         </Grid>
 
         <Grid Grid.Row="3" Margin="0,10,0,0">

@@ -1,5 +1,6 @@
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using System.Windows.Media;
 using QuickDock.Models;
 using QuickDock.Services;
@@ -12,6 +13,7 @@ public partial class SettingsWindow : Window
     private readonly AutoStartService _autoStartService;
     private List<DockItem> _items;
     private bool _initialized;
+    private bool _autoStartEnabled;
 
     public SettingsWindow(ConfigService configService, AutoStartService autoStartService)
     {
@@ -22,7 +24,9 @@ public partial class SettingsWindow : Window
         InitializeComponent();
         
         ItemsListBox.ItemsSource = _items;
-        AutoStartCheckBox.IsChecked = _autoStartService.IsEnabled();
+        
+        _autoStartEnabled = _autoStartService.IsEnabled();
+        UpdateAutoStartToggle();
         
         LanguageComboBox.Items.Add("中文");
         LanguageComboBox.Items.Add("English");
@@ -64,7 +68,6 @@ public partial class SettingsWindow : Window
         DeleteButton.Content = Lang.T("Settings.Delete");
         UpButton.Content = Lang.T("Settings.Up");
         DownButton.Content = Lang.T("Settings.Down");
-        AutoStartCheckBox.Content = Lang.T("Settings.StartWithWindows");
         LanguageLabel.Text = Lang.T("Settings.Language") + ":";
         OpacityLabel.Text = Lang.T("Settings.Opacity") + ":";
         BackgroundColorLabel.Text = Lang.T("Settings.BackgroundColor") + ":";
@@ -75,6 +78,42 @@ public partial class SettingsWindow : Window
         WeatherCityLabel.Text = Lang.T("Settings.WeatherCity") + ":";
         SaveButton.Content = Lang.T("Settings.Save");
         CancelButton.Content = Lang.T("Settings.Cancel");
+    }
+
+    private void UpdateAutoStartToggle()
+    {
+        if (_autoStartEnabled)
+        {
+            AutoStartToggle.Background = new SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#4a9eff"));
+            AutoStartToggleKnob.Background = new SolidColorBrush(System.Windows.Media.Colors.White);
+            AutoStartToggleKnob.HorizontalAlignment = System.Windows.HorizontalAlignment.Right;
+            AutoStartToggleKnob.Margin = new Thickness(0, 0, 2, 0);
+        }
+        else
+        {
+            AutoStartToggle.Background = new SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#444"));
+            AutoStartToggleKnob.Background = new SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#888"));
+            AutoStartToggleKnob.HorizontalAlignment = System.Windows.HorizontalAlignment.Left;
+            AutoStartToggleKnob.Margin = new Thickness(2, 0, 0, 0);
+        }
+    }
+
+    private void OnAutoStartClick(object sender, MouseButtonEventArgs e)
+    {
+        _autoStartEnabled = !_autoStartEnabled;
+        
+        if (_autoStartEnabled)
+        {
+            _autoStartService.Enable();
+            _configService.Settings.AutoStart = true;
+        }
+        else
+        {
+            _autoStartService.Disable();
+            _configService.Settings.AutoStart = false;
+        }
+        
+        UpdateAutoStartToggle();
     }
 
     private void OnItemSelected(object sender, SelectionChangedEventArgs e)
@@ -146,22 +185,6 @@ public partial class SettingsWindow : Window
             (_items[index], _items[index + 1]) = (_items[index + 1], _items[index]);
             ItemsListBox.SelectedIndex = index + 1;
             ItemsListBox.Items.Refresh();
-        }
-    }
-
-    private void OnAutoStartChanged(object sender, RoutedEventArgs e)
-    {
-        if (!_initialized) return;
-        
-        if (AutoStartCheckBox.IsChecked == true)
-        {
-            _autoStartService.Enable();
-            _configService.Settings.AutoStart = true;
-        }
-        else
-        {
-            _autoStartService.Disable();
-            _configService.Settings.AutoStart = false;
         }
     }
 
