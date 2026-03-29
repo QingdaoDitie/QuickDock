@@ -12,13 +12,13 @@
         <Style x:Key="ResourceLabelStyle" TargetType="TextBlock">
             <Setter Property="Foreground" Value="#777"/>
             <Setter Property="FontSize" Value="10"/>
-            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="HorizontalAlignment" Value="Center"/>
             <Setter Property="FontFamily" Value="Segoe UI"/>
         </Style>
         <Style x:Key="ResourceValueStyle" TargetType="TextBlock">
             <Setter Property="Foreground" Value="#bbb"/>
             <Setter Property="FontSize" Value="11"/>
-            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="HorizontalAlignment" Value="Center"/>
             <Setter Property="FontFamily" Value="Consolas"/>
         </Style>
     </UserControl.Resources>
@@ -26,22 +26,14 @@
     <Border Background="#1a1a1a" 
             BorderBrush="#333" 
             BorderThickness="1"
-            Padding="12,4"
+            Padding="10,3,6,3"
             CornerRadius="4">
         <Grid>
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="Auto"/>
-                <ColumnDefinition Width="Auto"/>
-                <ColumnDefinition Width="Auto"/>
-                <ColumnDefinition Width="Auto"/>
-                <ColumnDefinition Width="Auto"/>
-                <ColumnDefinition Width="Auto"/>
-                <ColumnDefinition Width="Auto"/>
-                <ColumnDefinition Width="Auto"/>
-                <ColumnDefinition Width="Auto"/>
-                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
             
@@ -49,7 +41,7 @@
                        Text="{Binding WeatherIcon}"
                        FontSize="14"
                        VerticalAlignment="Center"
-                       Margin="0,0,5,0"
+                       Margin="0,0,4,0"
                        Foreground="#e0e0e0"
                        MouseLeftButtonUp="OnRefreshClick"
                        ToolTip="点击刷新天气"/>
@@ -57,55 +49,61 @@
             <TextBlock Grid.Column="1"
                        Text="{Binding WeatherText}"
                        Style="{StaticResource StatusTextStyle}"
-                       Margin="0,0,10,0"
+                       Margin="0,0,8,0"
                        MouseLeftButtonUp="OnRefreshClick"/>
             
             <Border Grid.Column="2"
                     Width="1"
                     Background="#444"
-                    Margin="0,2,8,2"/>
+                    Margin="0,2,6,2"/>
             
-            <TextBlock Grid.Column="3"
-                       Text="CPU"
-                       Style="{StaticResource ResourceLabelStyle}"
-                       Margin="0,0,3,0"/>
-            
-            <TextBlock Grid.Column="4"
-                       Style="{StaticResource ResourceValueStyle}">
-                <TextBlock.Text>
-                    <MultiBinding StringFormat="{}{0}%">
-                        <Binding Path="CpuPercent"/>
-                    </MultiBinding>
-                </TextBlock.Text>
-            </TextBlock>
-            
-            <TextBlock Grid.Column="5"
-                       Text="MEM"
-                       Style="{StaticResource ResourceLabelStyle}"
-                       Margin="8,0,3,0"/>
-            
-            <TextBlock Grid.Column="6"
-                       Style="{StaticResource ResourceValueStyle}">
-                <TextBlock.Text>
-                    <MultiBinding StringFormat="{}{0}%">
-                        <Binding Path="MemPercent"/>
-                    </MultiBinding>
-                </TextBlock.Text>
-            </TextBlock>
-            
-            <TextBlock Grid.Column="7"
-                       Text="GPU"
-                       Style="{StaticResource ResourceLabelStyle}"
-                       Margin="8,0,3,0"/>
-            
-            <TextBlock Grid.Column="8"
-                       Style="{StaticResource ResourceValueStyle}">
-                <TextBlock.Text>
-                    <MultiBinding StringFormat="{}{0}%">
-                        <Binding Path="GpuPercent"/>
-                    </MultiBinding>
-                </TextBlock.Text>
-            </TextBlock>
+            <Grid Grid.Column="4"
+                  VerticalAlignment="Center">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="32"/>
+                    <ColumnDefinition Width="32"/>
+                    <ColumnDefinition Width="32"/>
+                </Grid.ColumnDefinitions>
+                
+                <TextBlock Grid.Row="0" Grid.Column="0"
+                           Text="CPU"
+                           Style="{StaticResource ResourceLabelStyle}"/>
+                <TextBlock Grid.Row="0" Grid.Column="1"
+                           Text="MEM"
+                           Style="{StaticResource ResourceLabelStyle}"/>
+                <TextBlock Grid.Row="0" Grid.Column="2"
+                           Text="GPU"
+                           Style="{StaticResource ResourceLabelStyle}"/>
+                
+                <TextBlock Grid.Row="1" Grid.Column="0"
+                           Style="{StaticResource ResourceValueStyle}">
+                    <TextBlock.Text>
+                        <MultiBinding StringFormat="{}{0}%">
+                            <Binding Path="CpuPercent"/>
+                        </MultiBinding>
+                    </TextBlock.Text>
+                </TextBlock>
+                <TextBlock Grid.Row="1" Grid.Column="1"
+                           Style="{StaticResource ResourceValueStyle}">
+                    <TextBlock.Text>
+                        <MultiBinding StringFormat="{}{0}%">
+                            <Binding Path="MemPercent"/>
+                        </MultiBinding>
+                    </TextBlock.Text>
+                </TextBlock>
+                <TextBlock Grid.Row="1" Grid.Column="2"
+                           Style="{StaticResource ResourceValueStyle}">
+                    <TextBlock.Text>
+                        <MultiBinding StringFormat="{}{0}%">
+                            <Binding Path="GpuPercent"/>
+                        </MultiBinding>
+                    </TextBlock.Text>
+                </TextBlock>
+            </Grid>
         </Grid>
     </Border>
 </UserControl>
