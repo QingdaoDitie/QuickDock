@@ -1,6 +1,8 @@
 # QuickDock
 
-<img src="QuickDock/Assets/app.ico" alt="QuickDock Logo" width="64" height="64">
+<p align="center">
+  <img src="QuickDock/Assets/app.ico" alt="QuickDock Logo" width="128" height="128">
+</p>
 
 轻量级 Windows 快捷启动工具，基于 WPF 开发，支持自定义程序快捷方式、天气显示、系统资源监控。
 
