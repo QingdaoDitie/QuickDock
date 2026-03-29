@@ -2,24 +2,39 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Management;
 
 namespace QuickDock.Services;
 
 public class SystemResourceService : IDisposable
 {
-    private readonly PerformanceCounter? _cpuCounter;
-    private readonly List<PerformanceCounter> _gpuCounters = new();
+    private PerformanceCounter? _cpuCounter;
+    private int _lastCpuPercent;
+    private DateTime _lastCpuReadTime;
+    private int _lastGpuPercent;
+    private DateTime _lastGpuReadTime;
+    private List<PerformanceCounter>? _gpuCounters;
 
     public SystemResourceService()
     {
         try
         {
-            _cpuCounter = new PerformanceCounter("Processor", "% Processor Time", "_Total");
+            _cpuCounter = new PerformanceCounter("Processor Information", "% Processor Utility", "_Total");
             _cpuCounter.NextValue();
+            _lastCpuReadTime = DateTime.MinValue;
         }
         catch
         {
-            _cpuCounter = null;
+            try
+            {
+                _cpuCounter = new PerformanceCounter("Processor", "% Processor Time", "_Total");
+                _cpuCounter.NextValue();
+                _lastCpuReadTime = DateTime.MinValue;
+            }
+            catch
+            {
+                _cpuCounter = null;
+            }
         }
 
         InitializeGpuCounters();
@@ -31,10 +46,11 @@ public class SystemResourceService : IDisposable
         {
             var category = new PerformanceCounterCategory("GPU Engine");
             var instanceNames = category.GetInstanceNames();
+            _gpuCounters = new List<PerformanceCounter>();
 
             foreach (var instance in instanceNames)
             {
-                if (instance.Contains("engtype_"))
+                if (instance.Contains("engtype_3D"))
                 {
                     try
                     {
@@ -50,16 +66,21 @@ public class SystemResourceService : IDisposable
         }
         catch
         {
+            _gpuCounters = null;
         }
     }
 
     public SystemResourceInfo GetResourceInfo()
     {
+        int cpuPercent = GetCpuUsage();
+        int memPercent = GetMemoryUsage();
+        int gpuPercent = GetGpuUsage();
+
         return new SystemResourceInfo
         {
-            CpuPercent = GetCpuUsage(),
-            MemPercent = GetMemoryUsage(),
-            GpuPercent = GetGpuUsage()
+            CpuPercent = cpuPercent,
+            MemPercent = memPercent,
+            GpuPercent = gpuPercent
         };
     }
 
@@ -67,16 +88,26 @@ public class SystemResourceService : IDisposable
     {
         try
         {
-            if (_cpuCounter != null)
+            if (_cpuCounter == null)
+                return 0;
+
+            var now = DateTime.Now;
+            var elapsed = (now - _lastCpuReadTime).TotalMilliseconds;
+            
+            if (elapsed < 500)
             {
-                var value = (int)Math.Round(_cpuCounter.NextValue());
-                return Math.Max(0, Math.Min(100, value));
+                return _lastCpuPercent;
             }
-            return 0;
+
+            float value = _cpuCounter.NextValue();
+            _lastCpuPercent = (int)Math.Round(value);
+            _lastCpuReadTime = now;
+            
+            return _lastCpuPercent;
         }
         catch
         {
-            return 0;
+            return _lastCpuPercent;
         }
     }
 
@@ -100,49 +131,71 @@ public class SystemResourceService : IDisposable
     {
         try
         {
-            if (_gpuCounters.Count == 0)
-                return 0;
-
-            float totalUsage = 0;
-            int validCount = 0;
-
-            foreach (var counter in _gpuCounters)
+            var now = DateTime.Now;
+            var elapsed = (now - _lastGpuReadTime).TotalMilliseconds;
+            
+            if (elapsed < 500)
             {
-                try
+                return _lastGpuPercent;
+            }
+
+            if (_gpuCounters == null || _gpuCounters.Count == 0)
+            {
+                using var searcher = new ManagementObjectSearcher("SELECT LoadPercentage FROM Win32_VideoController");
+                var results = searcher.Get();
+                
+                foreach (var obj in results)
                 {
-                    float value = counter.NextValue();
-                    if (value >= 0)
+                    var load = obj["LoadPercentage"];
+                    if (load != null && uint.TryParse(load.ToString(), out uint value))
                     {
-                        totalUsage += value;
-                        validCount++;
+                        _lastGpuPercent = (int)value;
+                        break;
                     }
                 }
-                catch
-                {
-                }
             }
-
-            if (validCount > 0)
+            else
             {
-                var avgUsage = totalUsage / validCount;
-                return (int)Math.Round(Math.Min(100, avgUsage));
+                float maxUsage = 0;
+
+                foreach (var counter in _gpuCounters)
+                {
+                    try
+                    {
+                        float value = counter.NextValue();
+                        if (value > maxUsage)
+                        {
+                            maxUsage = value;
+                        }
+                    }
+                    catch
+                    {
+                    }
+                }
+
+                _lastGpuPercent = (int)Math.Round(maxUsage);
             }
-            return 0;
+            
+            _lastGpuReadTime = now;
+            return _lastGpuPercent;
         }
         catch
         {
-            return 0;
+            return _lastGpuPercent;
         }
     }
 
     public void Dispose()
     {
         _cpuCounter?.Dispose();
-        foreach (var counter in _gpuCounters)
+        if (_gpuCounters != null)
         {
-            counter.Dispose();
+            foreach (var counter in _gpuCounters)
+            {
+                counter.Dispose();
+            }
+            _gpuCounters.Clear();
         }
-        _gpuCounters.Clear();
     }
 }
 
