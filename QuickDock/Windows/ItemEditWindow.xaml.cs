@@ -31,7 +31,8 @@ public partial class ItemEditWindow : Window
                 Path = item.Path,
                 IconPath = item.IconPath,
                 Arguments = item.Arguments,
-                RunAsAdmin = item.RunAsAdmin
+                RunAsAdmin = item.RunAsAdmin,
+                AppendClipboard = item.AppendClipboard
             };
             NameTextBox.Text = item.Name;
             TypeComboBox.SelectedIndex = Array.IndexOf(_types, item.Type);
@@ -39,6 +40,7 @@ public partial class ItemEditWindow : Window
             ArgumentsTextBox.Text = item.Arguments ?? "";
             IconPathTextBox.Text = item.IconPath ?? "";
             RunAsAdminCheckBox.IsChecked = item.RunAsAdmin;
+            AppendClipboardCheckBox.IsChecked = item.AppendClipboard;
         }
         else
         {
@@ -59,6 +61,7 @@ public partial class ItemEditWindow : Window
         ArgumentsLabel.Text = Lang.T("Edit.Arguments") + ":";
         IconLabel.Text = Lang.T("Edit.IconPath") + ":";
         RunAsAdminCheckBox.Content = Lang.T("RunAsAdmin");
+        AppendClipboardCheckBox.Content = Lang.T("AppendClipboard");
         OkButton.Content = Lang.T("Edit.OK");
         CancelButton.Content = Lang.T("Edit.Cancel");
         FetchIconBtn.Content = Lang.T("Edit.FetchIcon");
@@ -75,6 +78,7 @@ public partial class ItemEditWindow : Window
         
         bool isWebPage = type == DockItemType.WebPage;
         FetchIconBtn.Visibility = isWebPage ? Visibility.Visible : Visibility.Collapsed;
+        AppendClipboardCheckBox.Visibility = isWebPage ? Visibility.Visible : Visibility.Collapsed;
         
         if (!isWebPage)
         {
@@ -239,6 +243,7 @@ public partial class ItemEditWindow : Window
         Item.Arguments = ArgumentsTextBox.Text.Trim();
         Item.IconPath = string.IsNullOrWhiteSpace(IconPathTextBox.Text) ? null : IconPathTextBox.Text.Trim();
         Item.RunAsAdmin = RunAsAdminCheckBox.IsChecked ?? false;
+        Item.AppendClipboard = AppendClipboardCheckBox.IsChecked ?? false;
 
         DialogResult = true;
         Close();

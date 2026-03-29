@@ -71,7 +71,8 @@ public static class Lang
         { "Settings.IconSize", "图标大小" },
         { "Settings.IconSpacing", "图标间距" },
         { "Settings.ShowStatusBar", "显示状态栏" },
-        { "Settings.WeatherCity", "天气城市" }
+        { "Settings.WeatherCity", "天气城市" },
+        { "AppendClipboard", "追加剪贴板内容" }
     };
 
     private static readonly Dictionary<string, string> English = new()
@@ -129,6 +130,7 @@ public static class Lang
         { "Settings.IconSize", "Icon Size" },
         { "Settings.IconSpacing", "Icon Spacing" },
         { "Settings.ShowStatusBar", "Show Status Bar" },
-        { "Settings.WeatherCity", "Weather City" }
+        { "Settings.WeatherCity", "Weather City" },
+        { "AppendClipboard", "Append Clipboard Content" }
     };
 }

@@ -17,4 +17,5 @@ public class DockItem
     public string? IconPath { get; set; }
     public string? Arguments { get; set; }
     public bool RunAsAdmin { get; set; }
+    public bool AppendClipboard { get; set; }
 }

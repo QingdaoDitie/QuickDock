@@ -11,19 +11,21 @@ public class LaunchService
     {
         try
         {
+            var clipboardContent = item.AppendClipboard ? GetClipboardText() : null;
+            
             switch (item.Type)
             {
                 case DockItemType.Application:
-                    LaunchApplication(item.Path, item.Arguments, item.RunAsAdmin);
+                    LaunchApplication(item.Path, item.Arguments, item.RunAsAdmin, clipboardContent);
                     break;
                 case DockItemType.Folder:
                     LaunchFolder(item.Path);
                     break;
                 case DockItemType.WebPage:
-                    LaunchWebPage(item.Path);
+                    LaunchWebPage(item.Path, clipboardContent);
                     break;
                 case DockItemType.Command:
-                    LaunchCommand(item.Path);
+                    LaunchCommand(item.Path, clipboardContent);
                     break;
             }
         }
@@ -37,7 +39,7 @@ public class LaunchService
         }
     }
 
-    private void LaunchApplication(string path, string? arguments, bool runAsAdmin)
+    private void LaunchApplication(string path, string? arguments, bool runAsAdmin, string? clipboardContent)
     {
         var startInfo = new ProcessStartInfo
         {
@@ -50,9 +52,17 @@ public class LaunchService
             startInfo.Verb = "runas";
         }
         
-        if (!string.IsNullOrEmpty(arguments))
+        var args = arguments ?? "";
+        if (!string.IsNullOrEmpty(clipboardContent))
         {
-            startInfo.Arguments = arguments;
+            args = string.IsNullOrEmpty(args) 
+                ? $"\"{clipboardContent}\"" 
+                : $"{args} \"{clipboardContent}\"";
+        }
+        
+        if (!string.IsNullOrEmpty(args))
+        {
+            startInfo.Arguments = args;
         }
         Process.Start(startInfo);
     }
@@ -67,12 +77,26 @@ public class LaunchService
         });
     }
 
-    private void LaunchWebPage(string url)
+    private void LaunchWebPage(string url, string? clipboardContent)
     {
         if (!url.StartsWith("http://") && !url.StartsWith("https://"))
         {
             url = "https://" + url;
         }
+        
+        if (!string.IsNullOrEmpty(clipboardContent))
+        {
+            var encodedContent = Uri.EscapeDataString(clipboardContent);
+            if (url.Contains("?"))
+            {
+                url = $"{url}&q={encodedContent}";
+            }
+            else
+            {
+                url = $"{url}?q={encodedContent}";
+            }
+        }
+        
         Process.Start(new ProcessStartInfo
         {
             FileName = url,
@@ -80,14 +104,31 @@ public class LaunchService
         });
     }
 
-    private void LaunchCommand(string command)
+    private void LaunchCommand(string command, string? clipboardContent)
     {
+        if (!string.IsNullOrEmpty(clipboardContent))
+        {
+            command = $"{command} \"{clipboardContent}\"";
+        }
         Process.Start(new ProcessStartInfo
         {
             FileName = "cmd.exe",
             Arguments = $"/c {command}",
             UseShellExecute = true
         });
+    }
+
+    private string? GetClipboardText()
+    {
+        try
+        {
+            if (System.Windows.Clipboard.ContainsText())
+            {
+                return System.Windows.Clipboard.GetText();
+            }
+        }
+        catch { }
+        return null;
     }
 
     public System.Drawing.Icon? GetSystemIcon(DockItemType type)
