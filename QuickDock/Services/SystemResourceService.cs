@@ -1,14 +1,14 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
-using System.Runtime.InteropServices;
-using System.Management;
+using System.Linq;
 
 namespace QuickDock.Services;
 
-public class SystemResourceService
+public class SystemResourceService : IDisposable
 {
     private readonly PerformanceCounter? _cpuCounter;
-    private int _lastCpuPercent;
+    private readonly List<PerformanceCounter> _gpuCounters = new();
 
     public SystemResourceService()
     {
@@ -16,25 +16,50 @@ public class SystemResourceService
         {
             _cpuCounter = new PerformanceCounter("Processor", "% Processor Time", "_Total");
             _cpuCounter.NextValue();
-            _lastCpuPercent = 0;
         }
         catch
         {
             _cpuCounter = null;
         }
+
+        InitializeGpuCounters();
+    }
+
+    private void InitializeGpuCounters()
+    {
+        try
+        {
+            var category = new PerformanceCounterCategory("GPU Engine");
+            var instanceNames = category.GetInstanceNames();
+
+            foreach (var instance in instanceNames)
+            {
+                if (instance.Contains("engtype_"))
+                {
+                    try
+                    {
+                        var counter = new PerformanceCounter("GPU Engine", "Utilization Percentage", instance);
+                        counter.NextValue();
+                        _gpuCounters.Add(counter);
+                    }
+                    catch
+                    {
+                    }
+                }
+            }
+        }
+        catch
+        {
+        }
     }
 
     public SystemResourceInfo GetResourceInfo()
     {
-        int cpuPercent = GetCpuUsage();
-        int memPercent = GetMemoryUsage();
-        int gpuPercent = GetGpuUsage();
-
         return new SystemResourceInfo
         {
-            CpuPercent = cpuPercent,
-            MemPercent = memPercent,
-            GpuPercent = gpuPercent
+            CpuPercent = GetCpuUsage(),
+            MemPercent = GetMemoryUsage(),
+            GpuPercent = GetGpuUsage()
         };
     }
 
@@ -44,13 +69,14 @@ public class SystemResourceService
         {
             if (_cpuCounter != null)
             {
-                _lastCpuPercent = (int)Math.Round(_cpuCounter.NextValue());
+                var value = (int)Math.Round(_cpuCounter.NextValue());
+                return Math.Max(0, Math.Min(100, value));
             }
-            return _lastCpuPercent;
+            return 0;
         }
         catch
         {
-            return _lastCpuPercent;
+            return 0;
         }
     }
 
@@ -74,20 +100,49 @@ public class SystemResourceService
     {
         try
         {
-            using var searcher = new ManagementObjectSearcher("SELECT LoadPercentage FROM Win32_VideoController");
-            foreach (var obj in searcher.Get())
+            if (_gpuCounters.Count == 0)
+                return 0;
+
+            float totalUsage = 0;
+            int validCount = 0;
+
+            foreach (var counter in _gpuCounters)
             {
-                var val = obj["LoadPercentage"];
-                if (val != null && int.TryParse(val.ToString(), out int percent))
+                try
                 {
-                    return percent;
+                    float value = counter.NextValue();
+                    if (value >= 0)
+                    {
+                        totalUsage += value;
+                        validCount++;
+                    }
+                }
+                catch
+                {
                 }
             }
+
+            if (validCount > 0)
+            {
+                var avgUsage = totalUsage / validCount;
+                return (int)Math.Round(Math.Min(100, avgUsage));
+            }
+            return 0;
         }
         catch
         {
+            return 0;
         }
-        return 0;
+    }
+
+    public void Dispose()
+    {
+        _cpuCounter?.Dispose();
+        foreach (var counter in _gpuCounters)
+        {
+            counter.Dispose();
+        }
+        _gpuCounters.Clear();
     }
 }
 
