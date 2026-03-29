@@ -14,31 +14,85 @@
         SizeToContent="WidthAndHeight">
     
     <Window.Resources>
+        <Storyboard x:Key="DynamicIslandShowStoryboard">
+            <DoubleAnimation x:Name="WidthAnimation"
+                             Storyboard.TargetName="DockBorder"
+                             Storyboard.TargetProperty="Width"
+                             From="60" To="300"
+                             Duration="0:0:0.35">
+                <DoubleAnimation.EasingFunction>
+                    <CubicEase EasingMode="EaseOut"/>
+                </DoubleAnimation.EasingFunction>
+            </DoubleAnimation>
+            <DoubleAnimation x:Name="HeightAnimation"
+                             Storyboard.TargetName="DockBorder"
+                             Storyboard.TargetProperty="Height"
+                             From="28" To="70"
+                             BeginTime="0:0:0.2"
+                             Duration="0:0:0.3">
+                <DoubleAnimation.EasingFunction>
+                    <CubicEase EasingMode="EaseOut"/>
+                </DoubleAnimation.EasingFunction>
+            </DoubleAnimation>
+            <DoubleAnimation Storyboard.TargetName="ContentPanel"
+                             Storyboard.TargetProperty="Opacity"
+                             From="0" To="1"
+                             BeginTime="0:0:0.35"
+                             Duration="0:0:0.2"/>
+        </Storyboard>
+        
+        <Storyboard x:Key="DynamicIslandHideStoryboard">
+            <DoubleAnimation Storyboard.TargetName="ContentPanel"
+                             Storyboard.TargetProperty="Opacity"
+                             From="1" To="0"
+                             Duration="0:0:0.15"/>
+            <DoubleAnimation Storyboard.TargetName="DockBorder"
+                             Storyboard.TargetProperty="Height"
+                             From="70" To="28"
+                             BeginTime="0:0:0.1"
+                             Duration="0:0:0.25">
+                <DoubleAnimation.EasingFunction>
+                    <CubicEase EasingMode="EaseIn"/>
+                </DoubleAnimation.EasingFunction>
+            </DoubleAnimation>
+            <DoubleAnimation Storyboard.TargetName="DockBorder"
+                             Storyboard.TargetProperty="Width"
+                             From="300" To="60"
+                             BeginTime="0:0:0.2"
+                             Duration="0:0:0.25">
+                <DoubleAnimation.EasingFunction>
+                    <CubicEase EasingMode="EaseIn"/>
+                </DoubleAnimation.EasingFunction>
+            </DoubleAnimation>
+        </Storyboard>
     </Window.Resources>
 
     <Grid x:Name="MainGrid">
         <Border x:Name="DockBorder"
                 Style="{StaticResource DockPanelStyle}"
-                Padding="10,8"
+                Width="60"
+                Height="28"
                 HorizontalAlignment="Center"
                 MouseLeave="OnDockMouseLeave">
-            <StackPanel Orientation="Horizontal">
-                <local:StatusControl x:Name="StatusControl" Margin="0,0,10,0"/>
-                <Border Width="1" Background="#444" Margin="0,4,10,4"/>
-                <ItemsControl x:Name="DockItems" 
-                              ItemsSource="{Binding Items}">
-                    <ItemsControl.ItemsPanel>
-                        <ItemsPanelTemplate>
-                            <StackPanel x:Name="ItemsPanel" Orientation="Horizontal"/>
-                        </ItemsPanelTemplate>
-                    </ItemsControl.ItemsPanel>
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate>
-                            <local:DockItemControl x:Name="DockItem"/>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
-            </StackPanel>
+            <Grid x:Name="ContentPanel" Opacity="0">
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <local:StatusControl x:Name="StatusControl" Margin="0,0,10,0"/>
+                    <Border Width="1" Background="#444" Margin="0,4,10,4"/>
+                    <ItemsControl x:Name="DockItems" 
+                                  ItemsSource="{Binding Items}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel x:Name="ItemsPanel" Orientation="Horizontal"/>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <local:DockItemControl x:Name="DockItem"/>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </Grid>
         </Border>
     </Grid>
 </Window>
