@@ -20,9 +20,6 @@ public partial class MainWindow : Window
     private double _baseWindowHeight = 70;
     private bool _hasShownStartupAnimation = false;
     private const int DesiredFrameRate = 120;
-    
-    private Storyboard? _showStoryboard;
-    private Storyboard? _hideStoryboard;
 
     public ObservableCollection<DockItem> Items { get; }
 
@@ -39,42 +36,8 @@ public partial class MainWindow : Window
         Items = new ObservableCollection<DockItem>(_configService.Items);
         DataContext = this;
 
-        InitializeStoryboards();
         ApplySettings();
         PositionWindow();
-    }
-    
-    private void InitializeStoryboards()
-    {
-        _showStoryboard = (Storyboard)FindResource("DynamicIslandShowStoryboard");
-        _hideStoryboard = (Storyboard)FindResource("DynamicIslandHideStoryboard");
-        
-        if (_hideStoryboard != null)
-        {
-            _hideStoryboard.Completed += (s, e) =>
-            {
-                _isHidden = true;
-                _isAnimating = false;
-                Hide();
-                ResetDockState();
-            };
-        }
-        
-        if (_showStoryboard != null)
-        {
-            _showStoryboard.Completed += (s, e) =>
-            {
-                _isHidden = false;
-                _isAnimating = false;
-            };
-        }
-    }
-    
-    private void ResetDockState()
-    {
-        DockBorder.Width = 60;
-        DockBorder.Height = 28;
-        ContentPanel.Opacity = 0;
     }
     
     public void ShowStartupAnimation()
@@ -90,7 +53,7 @@ public partial class MainWindow : Window
     
     private async System.Threading.Tasks.Task ShowStartupAnimationAsync()
     {
-        await System.Threading.Tasks.Task.Delay(2000);
+        await System.Threading.Tasks.Task.Delay(1500);
         await Dispatcher.InvokeAsync(() =>
         {
             if (!_isAnimating && !_isHidden)
@@ -190,7 +153,7 @@ public partial class MainWindow : Window
         Show();
         
         var scaledHeight = GetScaledHeight();
-        var topAnimation = new DoubleAnimation
+        var animation = new DoubleAnimation
         {
             From = -scaledHeight,
             To = 0,
@@ -199,65 +162,15 @@ public partial class MainWindow : Window
             FillBehavior = FillBehavior.HoldEnd
         };
         
-        Timeline.SetDesiredFrameRate(topAnimation, DesiredFrameRate);
+        Timeline.SetDesiredFrameRate(animation, DesiredFrameRate);
         
-        topAnimation.Completed += (s, e) =>
+        animation.Completed += (s, e) =>
         {
-            if (_showStoryboard != null)
-            {
-                UpdateStoryboardTargets();
-                _showStoryboard.Begin();
-            }
-            else
-            {
-                _isHidden = false;
-                _isAnimating = false;
-            }
+            _isHidden = false;
+            _isAnimating = false;
         };
         
-        BeginAnimation(TopProperty, topAnimation);
-    }
-    
-    private void UpdateStoryboardTargets()
-    {
-        var targetWidth = Math.Max(300, DockItems.ActualWidth + 80);
-        var targetHeight = GetScaledHeight();
-        
-        if (_showStoryboard != null)
-        {
-            foreach (var child in _showStoryboard.Children)
-            {
-                if (child is DoubleAnimation anim)
-                {
-                    if (anim.Name == "WidthAnimation")
-                    {
-                        anim.To = targetWidth;
-                    }
-                    else if (anim.Name == "HeightAnimation")
-                    {
-                        anim.To = targetHeight;
-                    }
-                }
-            }
-        }
-        
-        if (_hideStoryboard != null)
-        {
-            foreach (var child in _hideStoryboard.Children)
-            {
-                if (child is DoubleAnimation anim)
-                {
-                    if (Storyboard.GetTargetProperty(anim)?.Path == "Width")
-                    {
-                        anim.From = targetWidth;
-                    }
-                    else if (Storyboard.GetTargetProperty(anim)?.Path == "Height")
-                    {
-                        anim.From = targetHeight;
-                    }
-                }
-            }
-        }
+        BeginAnimation(TopProperty, animation);
     }
 
     public void SlideOut()
@@ -266,34 +179,26 @@ public partial class MainWindow : Window
 
         _isAnimating = true;
         
-        if (_hideStoryboard != null)
+        var scaledHeight = GetScaledHeight();
+        var animation = new DoubleAnimation
         {
-            UpdateStoryboardTargets();
-            _hideStoryboard.Begin();
-        }
-        else
+            From = 0,
+            To = -scaledHeight,
+            Duration = TimeSpan.FromSeconds(0.25),
+            EasingFunction = new CubicEase { EasingMode = EasingMode.EaseIn },
+            FillBehavior = FillBehavior.HoldEnd
+        };
+        
+        Timeline.SetDesiredFrameRate(animation, DesiredFrameRate);
+        
+        animation.Completed += (s, e) =>
         {
-            var scaledHeight = GetScaledHeight();
-            var animation = new DoubleAnimation
-            {
-                From = 0,
-                To = -scaledHeight,
-                Duration = TimeSpan.FromSeconds(0.25),
-                EasingFunction = new CubicEase { EasingMode = EasingMode.EaseIn },
-                FillBehavior = FillBehavior.HoldEnd
-            };
-            
-            Timeline.SetDesiredFrameRate(animation, DesiredFrameRate);
-            
-            animation.Completed += (s, e) =>
-            {
-                _isHidden = true;
-                _isAnimating = false;
-                Hide();
-            };
-            
-            BeginAnimation(TopProperty, animation);
-        }
+            _isHidden = true;
+            _isAnimating = false;
+            Hide();
+        };
+        
+        BeginAnimation(TopProperty, animation);
     }
 
     private void OnDockMouseLeave(object sender, System.Windows.Input.MouseEventArgs e)

@@ -14,6 +14,11 @@ public class HotZoneService : IDisposable
     [DllImport("user32.dll")]
     private static extern IntPtr MonitorFromPoint(POINT pt, uint dwFlags);
 
+    [DllImport("user32.dll")]
+    private static extern short GetAsyncKeyState(int vKey);
+
+    private const int VK_LBUTTON = 0x01;
+
     [StructLayout(LayoutKind.Sequential)]
     private struct POINT
     {
@@ -44,6 +49,7 @@ public class HotZoneService : IDisposable
     private readonly System.Windows.Threading.DispatcherTimer _timer;
     private readonly double _hotZoneWidthRatio;
     private bool _isInHotZone;
+    private bool _pendingTrigger;
     private bool _disposed;
 
     public event Action? HotZoneEntered;
@@ -83,15 +89,34 @@ public class HotZoneService : IDisposable
                          point.X >= hotZoneLeft &&
                          point.X <= hotZoneRight;
 
-        if (isInHotNow && !_isInHotZone)
+        var isLeftButtonDown = (GetAsyncKeyState(VK_LBUTTON) & 0x8000) != 0;
+
+        if (isInHotNow)
         {
-            _isInHotZone = true;
-            HotZoneEntered?.Invoke();
+            if (!isLeftButtonDown && !_isInHotZone)
+            {
+                _isInHotZone = true;
+                HotZoneEntered?.Invoke();
+            }
+            else if (isLeftButtonDown && !_isInHotZone)
+            {
+                _pendingTrigger = true;
+            }
+            else if (!isLeftButtonDown && _pendingTrigger)
+            {
+                _pendingTrigger = false;
+                _isInHotZone = true;
+                HotZoneEntered?.Invoke();
+            }
         }
-        else if (!isInHotNow && _isInHotZone)
+        else
         {
-            _isInHotZone = false;
-            HotZoneLeft?.Invoke();
+            _pendingTrigger = false;
+            if (_isInHotZone)
+            {
+                _isInHotZone = false;
+                HotZoneLeft?.Invoke();
+            }
         }
     }
 
