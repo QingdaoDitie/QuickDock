@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -12,9 +13,20 @@ namespace QuickDock;
 
 public partial class MainWindow : Window
 {
+    [DllImport("user32.dll")]
+    private static extern bool GetCursorPos(out POINT lpPoint);
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct POINT
+    {
+        public int X;
+        public int Y;
+    }
+
     private readonly ConfigService _configService;
     private readonly LaunchService _launchService;
     private readonly StatusService _statusService;
+    private readonly System.Windows.Threading.DispatcherTimer _mouseCheckTimer;
     private bool _isHidden = true;
     private bool _isAnimating;
     private double _baseWindowHeight = 70;
@@ -35,6 +47,12 @@ public partial class MainWindow : Window
         
         Items = new ObservableCollection<DockItem>(_configService.Items);
         DataContext = this;
+
+        _mouseCheckTimer = new System.Windows.Threading.DispatcherTimer
+        {
+            Interval = TimeSpan.FromMilliseconds(300)
+        };
+        _mouseCheckTimer.Tick += OnMouseCheckTimerTick;
 
         ApplySettings();
         PositionWindow();
@@ -168,6 +186,7 @@ public partial class MainWindow : Window
         {
             _isHidden = false;
             _isAnimating = false;
+            _mouseCheckTimer.Start();
         };
         
         BeginAnimation(TopProperty, animation);
@@ -177,6 +196,7 @@ public partial class MainWindow : Window
     {
         if (_isHidden || _isAnimating) return;
 
+        _mouseCheckTimer.Stop();
         _isAnimating = true;
         
         var scaledHeight = GetScaledHeight();
@@ -199,6 +219,32 @@ public partial class MainWindow : Window
         };
         
         BeginAnimation(TopProperty, animation);
+    }
+
+    private void OnMouseCheckTimerTick(object? sender, EventArgs e)
+    {
+        if (_isHidden || _isAnimating)
+        {
+            _mouseCheckTimer.Stop();
+            return;
+        }
+
+        if (!GetCursorPos(out POINT point))
+            return;
+
+        var dpiScale = VisualTreeHelper.GetDpi(this);
+        var windowLeft = Left * dpiScale.DpiScaleX;
+        var windowRight = (Left + ActualWidth) * dpiScale.DpiScaleX;
+        var windowTop = 0;
+        var windowBottom = (ActualHeight * _configService.Settings.Scale) * dpiScale.DpiScaleY;
+
+        var isMouseOverWindow = point.X >= windowLeft && point.X <= windowRight &&
+                                point.Y >= windowTop && point.Y <= windowBottom + 10;
+
+        if (!isMouseOverWindow)
+        {
+            SlideOut();
+        }
     }
 
     private void OnDockMouseLeave(object sender, System.Windows.Input.MouseEventArgs e)
