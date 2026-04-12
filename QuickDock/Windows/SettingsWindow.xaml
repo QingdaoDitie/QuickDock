@@ -3,16 +3,76 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="QuickDock Settings"
         Width="500"
-        Height="800"
+        Height="860"
         WindowStartupLocation="CenterScreen"
         ResizeMode="NoResize"
         Topmost="True"
-        Style="{StaticResource WindowStyle}">
+        Background="White">
+    
+    <Window.Resources>
+        <Style x:Key="SettingsButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="#e8e8e8"/>
+            <Setter Property="Foreground" Value="#333"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="BorderBrush" Value="#ccc"/>
+            <Setter Property="Padding" Value="10,5"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bd" 
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="4"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" 
+                                              VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="#d0d0d0"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style x:Key="TextBoxStyle" TargetType="TextBox">
+            <Setter Property="Background" Value="#f5f5f5"/>
+            <Setter Property="Foreground" Value="#333"/>
+            <Setter Property="BorderBrush" Value="#ccc"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="8,5"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TextBox">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="4"
+                                Padding="{TemplateBinding Padding}">
+                            <ScrollViewer x:Name="PART_ContentHost"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style x:Key="ComboBoxStyle" TargetType="ComboBox">
+            <Setter Property="Background" Value="#f5f5f5"/>
+            <Setter Property="Foreground" Value="#333"/>
+            <Setter Property="BorderBrush" Value="#ccc"/>
+            <Setter Property="BorderThickness" Value="1"/>
+        </Style>
+    </Window.Resources>
     
     <Grid Margin="20">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
@@ -30,7 +90,7 @@
                    Text="Dock Items" 
                    FontSize="16" 
                    FontWeight="Bold"
-                   Foreground="{StaticResource TextBrush}"
+                   Foreground="#333"
                    Margin="0,0,0,10"/>
 
         <Grid Grid.Row="1">
@@ -41,9 +101,9 @@
 
             <ListBox x:Name="ItemsListBox"
                      Grid.Column="0"
-                     Background="{StaticResource SecondaryBackgroundBrush}"
-                     BorderBrush="{StaticResource BorderBrush}"
-                     Foreground="{StaticResource TextBrush}"
+                     Background="#f5f5f5"
+                     BorderBrush="#ddd"
+                     Foreground="#333"
                      SelectionMode="Single"
                      DisplayMemberPath="Name"
                      SelectionChanged="OnItemSelected"/>
@@ -66,7 +126,7 @@
                         Click="OnDeleteClick"
                         Margin="0,0,0,5"
                         IsEnabled="False"/>
-                <Separator Background="{StaticResource BorderBrush}" Margin="0,5"/>
+                <Separator Background="#ddd" Margin="0,5"/>
                 <Button x:Name="UpButton"
                         Content="Up" 
                         Style="{StaticResource SettingsButtonStyle}"
@@ -88,7 +148,7 @@
             </Grid.RowDefinitions>
             
             <Border Grid.Row="0" 
-                    Background="#2a2a2a" 
+                    Background="#f0f0f0" 
                     Padding="12,8" 
                     CornerRadius="4"
                     Cursor="Hand"
@@ -100,13 +160,15 @@
                     </Grid.ColumnDefinitions>
                     
                     <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                        <TextBlock Text="开机自启" 
+                        <TextBlock x:Name="AutoStartTitleText"
+                                   Text="开机自启" 
                                    FontSize="14" 
                                    FontWeight="Medium"
-                                   Foreground="#e0e0e0"/>
-                        <TextBlock Text="启动 Windows 时自动运行 QuickDock" 
+                                   Foreground="#333"/>
+                        <TextBlock x:Name="AutoStartDescText"
+                                   Text="启动 Windows 时自动运行 QuickDock" 
                                    FontSize="11" 
-                                   Foreground="#888"
+                                   Foreground="#999"
                                    Margin="0,2,0,0"/>
                     </StackPanel>
                     
@@ -114,13 +176,13 @@
                             x:Name="AutoStartToggle"
                             Width="44" 
                             Height="24" 
-                            Background="#444"
+                            Background="#ccc"
                             CornerRadius="12"
                             VerticalAlignment="Center">
                         <Border x:Name="AutoStartToggleKnob"
                                 Width="20" 
                                 Height="20" 
-                                Background="#888"
+                                Background="White"
                                 CornerRadius="10"
                                 HorizontalAlignment="Left"
                                 Margin="2,0"/>
@@ -139,7 +201,7 @@
                        x:Name="LanguageLabel"
                        Text="Language:" 
                        VerticalAlignment="Center"
-                       Style="{StaticResource TextBlockStyle}"
+                       Foreground="#333"
                        Margin="0,0,10,0"/>
             <ComboBox Grid.Column="1"
                       x:Name="LanguageComboBox"
@@ -158,7 +220,7 @@
                        x:Name="BackgroundColorLabel"
                        Text="Background:" 
                        VerticalAlignment="Center"
-                       Style="{StaticResource TextBlockStyle}"
+                       Foreground="#333"
                        Margin="0,0,10,0"/>
             <TextBox Grid.Column="1"
                      x:Name="BackgroundColorTextBox"
@@ -187,7 +249,7 @@
                        x:Name="OpacityLabel"
                        Text="Opacity:" 
                        VerticalAlignment="Center"
-                       Style="{StaticResource TextBlockStyle}"
+                       Foreground="#333"
                        Margin="0,0,10,0"/>
             <Slider Grid.Column="1"
                     x:Name="OpacitySlider"
@@ -201,7 +263,7 @@
                        x:Name="OpacityValue"
                        Text="90%"
                        VerticalAlignment="Center"
-                       Style="{StaticResource TextBlockStyle}"
+                       Foreground="#333"
                        Margin="10,0,0,0"
                        Width="40"/>
         </Grid>
@@ -217,7 +279,7 @@
                        x:Name="ScaleLabel"
                        Text="Scale:" 
                        VerticalAlignment="Center"
-                       Style="{StaticResource TextBlockStyle}"
+                       Foreground="#333"
                        Margin="0,0,10,0"/>
             <Slider Grid.Column="1"
                     x:Name="ScaleSlider"
@@ -231,7 +293,7 @@
                        x:Name="ScaleValue"
                        Text="100%"
                        VerticalAlignment="Center"
-                       Style="{StaticResource TextBlockStyle}"
+                       Foreground="#333"
                        Margin="10,0,0,0"
                        Width="40"/>
         </Grid>
@@ -247,7 +309,7 @@
                        x:Name="IconSizeLabel"
                        Text="Icon Size:" 
                        VerticalAlignment="Center"
-                       Style="{StaticResource TextBlockStyle}"
+                       Foreground="#333"
                        Margin="0,0,10,0"/>
             <Slider Grid.Column="1"
                     x:Name="IconSizeSlider"
@@ -261,7 +323,7 @@
                        x:Name="IconSizeValue"
                        Text="32px"
                        VerticalAlignment="Center"
-                       Style="{StaticResource TextBlockStyle}"
+                       Foreground="#333"
                        Margin="10,0,0,0"
                        Width="40"/>
         </Grid>
@@ -277,7 +339,7 @@
                        x:Name="IconSpacingLabel"
                        Text="Icon Spacing:" 
                        VerticalAlignment="Center"
-                       Style="{StaticResource TextBlockStyle}"
+                       Foreground="#333"
                        Margin="0,0,10,0"/>
             <Slider Grid.Column="1"
                     x:Name="IconSpacingSlider"
@@ -291,7 +353,7 @@
                        x:Name="IconSpacingValue"
                        Text="5px"
                        VerticalAlignment="Center"
-                       Style="{StaticResource TextBlockStyle}"
+                       Foreground="#333"
                        Margin="10,0,0,0"
                        Width="40"/>
         </Grid>
@@ -300,18 +362,78 @@
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            
+            <TextBlock Grid.Column="0" 
+                       x:Name="TriggerDelayLabel"
+                       Text="Trigger Delay:" 
+                       VerticalAlignment="Center"
+                       Foreground="#333"
+                       Margin="0,0,10,0"/>
+            <Slider Grid.Column="1"
+                    x:Name="TriggerDelaySlider"
+                    Minimum="0"
+                    Maximum="2000"
+                    TickFrequency="100"
+                    IsSnapToTickEnabled="True"
+                    VerticalAlignment="Center"
+                    ValueChanged="OnTriggerDelayChanged"/>
+            <TextBlock Grid.Column="2"
+                       x:Name="TriggerDelayValue"
+                       Text="500ms"
+                       VerticalAlignment="Center"
+                       Foreground="#333"
+                       Margin="10,0,0,0"
+                       Width="50"/>
+        </Grid>
+
+        <Grid Grid.Row="10" Margin="0,10,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            
+            <TextBlock Grid.Column="0" 
+                       x:Name="EdgeSizeLabel"
+                       Text="Edge Size:" 
+                       VerticalAlignment="Center"
+                       Foreground="#333"
+                       Margin="0,0,10,0"/>
+            <Slider Grid.Column="1"
+                    x:Name="EdgeSizeSlider"
+                    Minimum="1"
+                    Maximum="10"
+                    TickFrequency="1"
+                    IsSnapToTickEnabled="True"
+                    VerticalAlignment="Center"
+                    ValueChanged="OnEdgeSizeChanged"/>
+            <TextBlock Grid.Column="2"
+                       x:Name="EdgeSizeValue"
+                       Text="1px"
+                       VerticalAlignment="Center"
+                       Foreground="#333"
+                       Margin="10,0,0,0"
+                       Width="40"/>
+        </Grid>
+
+        <Grid Grid.Row="11" Margin="0,10,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
             
             <CheckBox Grid.Column="0"
                       x:Name="ShowStatusBarCheckBox"
                       Content="Show Status Bar" 
-                      Style="{StaticResource CheckBoxStyle}"
+                      Foreground="#333"
                       Checked="OnShowStatusBarChanged"
                       Unchecked="OnShowStatusBarChanged"
                       VerticalAlignment="Center"/>
         </Grid>
 
-        <Grid Grid.Row="10" Margin="0,10,0,0">
+        <Grid Grid.Row="12" Margin="0,10,0,0">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="*"/>
@@ -321,7 +443,7 @@
                        x:Name="WeatherCityLabel"
                        Text="Weather City:" 
                        VerticalAlignment="Center"
-                       Style="{StaticResource TextBlockStyle}"
+                       Foreground="#333"
                        Margin="0,0,10,0"/>
             <TextBox Grid.Column="1"
                      x:Name="WeatherCityTextBox"
@@ -330,7 +452,7 @@
                      TextChanged="OnWeatherCityChanged"/>
         </Grid>
 
-        <StackPanel Grid.Row="11" 
+        <StackPanel Grid.Row="13" 
                     Orientation="Horizontal" 
                     HorizontalAlignment="Right"
                     Margin="0,15,0,0">

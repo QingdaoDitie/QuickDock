@@ -31,6 +31,28 @@ public class ConfigService
         Lang.CurrentLanguage = Settings.Language == "zh" ? Language.Chinese : Language.English;
     }
 
+    private void MigrateSettings(AppSettings settings)
+    {
+        var changed = false;
+
+        if (settings.HotZoneTriggerDelay <= 0)
+        {
+            settings.HotZoneTriggerDelay = 500;
+            changed = true;
+        }
+
+        if (settings.HotZoneEdgeSize <= 0)
+        {
+            settings.HotZoneEdgeSize = 1;
+            changed = true;
+        }
+
+        if (changed)
+        {
+            Save();
+        }
+    }
+
     private void EnsureIconsDirectory()
     {
         if (!Directory.Exists(IconsPath))
@@ -51,6 +73,7 @@ public class ConfigService
                 {
                     Items = config.Items ?? new List<DockItem>();
                     Settings = config.Settings ?? new AppSettings();
+                    MigrateSettings(Settings);
                 }
             }
             catch

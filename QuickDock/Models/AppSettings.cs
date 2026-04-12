@@ -4,6 +4,8 @@ public class AppSettings
 {
     public bool AutoStart { get; set; } = true;
     public double HotZoneWidth { get; set; } = 0.3;
+    public int HotZoneTriggerDelay { get; set; } = 500;
+    public int HotZoneEdgeSize { get; set; } = 1;
     public int AnimationDuration { get; set; } = 200;
     public string Language { get; set; } = "zh";
     public double DockOpacity { get; set; } = 0.9;

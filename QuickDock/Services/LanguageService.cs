@@ -72,6 +72,8 @@ public static class Lang
         { "Settings.IconSpacing", "图标间距" },
         { "Settings.ShowStatusBar", "显示状态栏" },
         { "Settings.WeatherCity", "天气城市" },
+        { "Settings.TriggerDelay", "触发延迟" },
+        { "Settings.EdgeSize", "边缘范围" },
         { "AppendClipboard", "追加剪贴板内容" }
     };
 
@@ -131,6 +133,8 @@ public static class Lang
         { "Settings.IconSpacing", "Icon Spacing" },
         { "Settings.ShowStatusBar", "Show Status Bar" },
         { "Settings.WeatherCity", "Weather City" },
+        { "Settings.TriggerDelay", "Trigger Delay" },
+        { "Settings.EdgeSize", "Edge Size" },
         { "AppendClipboard", "Append Clipboard Content" }
     };
 }

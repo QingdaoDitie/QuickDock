@@ -3,6 +3,7 @@ obj/
 .vs/
 .idea/
 .claude/
+.trae/
 *.user
 *.suo
 *.cache

@@ -55,6 +55,14 @@ public partial class SettingsWindow : Window
         ShowStatusBarCheckBox.IsChecked = _configService.Settings.ShowStatusBar;
         WeatherCityTextBox.Text = _configService.Settings.WeatherCity;
         
+        var triggerDelay = _configService.Settings.HotZoneTriggerDelay;
+        TriggerDelaySlider.Value = triggerDelay;
+        TriggerDelayValue.Text = $"{(int)triggerDelay}ms";
+        
+        var edgeSize = _configService.Settings.HotZoneEdgeSize;
+        EdgeSizeSlider.Value = edgeSize;
+        EdgeSizeValue.Text = $"{(int)edgeSize}px";
+        
         _initialized = true;
         ApplyLanguage();
     }
@@ -76,6 +84,8 @@ public partial class SettingsWindow : Window
         IconSpacingLabel.Text = Lang.T("Settings.IconSpacing") + ":";
         ShowStatusBarCheckBox.Content = Lang.T("Settings.ShowStatusBar");
         WeatherCityLabel.Text = Lang.T("Settings.WeatherCity") + ":";
+        TriggerDelayLabel.Text = Lang.T("Settings.TriggerDelay") + ":";
+        EdgeSizeLabel.Text = Lang.T("Settings.EdgeSize") + ":";
         SaveButton.Content = Lang.T("Settings.Save");
         CancelButton.Content = Lang.T("Settings.Cancel");
     }
@@ -247,6 +257,24 @@ public partial class SettingsWindow : Window
     {
         if (!_initialized) return;
         _configService.Settings.WeatherCity = WeatherCityTextBox.Text;
+    }
+
+    private void OnTriggerDelayChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+    {
+        if (!_initialized || TriggerDelayValue == null) return;
+        
+        var value = TriggerDelaySlider.Value;
+        _configService.Settings.HotZoneTriggerDelay = (int)value;
+        TriggerDelayValue.Text = $"{(int)value}ms";
+    }
+
+    private void OnEdgeSizeChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+    {
+        if (!_initialized || EdgeSizeValue == null) return;
+        
+        var value = EdgeSizeSlider.Value;
+        _configService.Settings.HotZoneEdgeSize = (int)value;
+        EdgeSizeValue.Text = $"{(int)value}px";
     }
 
     private void UpdateBackgroundColorPreview(string colorHex)

@@ -29,7 +29,10 @@ public partial class App : System.Windows.Application
             _autoStartService.Enable();
         }
 
-        _hotZoneService = new HotZoneService(_configService.Settings.HotZoneWidth);
+        _hotZoneService = new HotZoneService(
+            _configService.Settings.HotZoneWidth,
+            _configService.Settings.HotZoneTriggerDelay,
+            _configService.Settings.HotZoneEdgeSize);
         _hotZoneService.HotZoneEntered += OnHotZoneEntered;
         _hotZoneService.HotZoneLeft += OnHotZoneLeft;
         _hotZoneService.Start();
@@ -148,7 +151,10 @@ public partial class App : System.Windows.Application
             if (_hotZoneService != null && _configService != null)
             {
                 _hotZoneService.Stop();
-                var newService = new HotZoneService(_configService.Settings.HotZoneWidth);
+                var newService = new HotZoneService(
+                    _configService.Settings.HotZoneWidth,
+                    _configService.Settings.HotZoneTriggerDelay,
+                    _configService.Settings.HotZoneEdgeSize);
                 newService.HotZoneEntered += OnHotZoneEntered;
                 newService.HotZoneLeft += OnHotZoneLeft;
                 newService.Start();

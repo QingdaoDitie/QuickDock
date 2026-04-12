@@ -48,16 +48,22 @@ public class HotZoneService : IDisposable
 
     private readonly System.Windows.Threading.DispatcherTimer _timer;
     private readonly double _hotZoneWidthRatio;
+    private readonly int _triggerDelayMs;
+    private readonly int _edgeSize;
     private bool _isInHotZone;
     private bool _pendingTrigger;
     private bool _disposed;
+    private DateTime _hotZoneEnterTime;
+    private bool _isWaitingForDelay;
 
     public event Action? HotZoneEntered;
     public event Action? HotZoneLeft;
 
-    public HotZoneService(double hotZoneWidthRatio = 0.3, int checkInterval = 50)
+    public HotZoneService(double hotZoneWidthRatio = 0.3, int triggerDelayMs = 500, int edgeSize = 1, int checkInterval = 50)
     {
         _hotZoneWidthRatio = hotZoneWidthRatio;
+        _triggerDelayMs = triggerDelayMs;
+        _edgeSize = edgeSize;
         _timer = new System.Windows.Threading.DispatcherTimer
         {
             Interval = TimeSpan.FromMilliseconds(checkInterval)
@@ -85,7 +91,7 @@ public class HotZoneService : IDisposable
         var hotZoneLeft = screen.Left + (screen.Right - screen.Left - hotZoneWidth) / 2;
         var hotZoneRight = hotZoneLeft + hotZoneWidth;
 
-        var isInHotNow = point.Y <= screen.Top + 5 &&
+        var isInHotNow = point.Y <= screen.Top + _edgeSize &&
                          point.X >= hotZoneLeft &&
                          point.X <= hotZoneRight;
 
@@ -93,25 +99,37 @@ public class HotZoneService : IDisposable
 
         if (isInHotNow)
         {
-            if (!isLeftButtonDown && !_isInHotZone)
+            if (_isInHotZone)
+                return;
+
+            if (!_isWaitingForDelay)
             {
-                _isInHotZone = true;
-                HotZoneEntered?.Invoke();
+                _isWaitingForDelay = true;
+                _hotZoneEnterTime = DateTime.Now;
+                return;
             }
-            else if (isLeftButtonDown && !_isInHotZone)
+
+            if (isLeftButtonDown)
             {
                 _pendingTrigger = true;
+                return;
             }
-            else if (!isLeftButtonDown && _pendingTrigger)
-            {
+
+            var elapsed = (DateTime.Now - _hotZoneEnterTime).TotalMilliseconds;
+            if (elapsed < _triggerDelayMs)
+                return;
+
+            if (_pendingTrigger)
                 _pendingTrigger = false;
-                _isInHotZone = true;
-                HotZoneEntered?.Invoke();
-            }
+
+            _isWaitingForDelay = false;
+            _isInHotZone = true;
+            HotZoneEntered?.Invoke();
         }
         else
         {
             _pendingTrigger = false;
+            _isWaitingForDelay = false;
             if (_isInHotZone)
             {
                 _isInHotZone = false;
