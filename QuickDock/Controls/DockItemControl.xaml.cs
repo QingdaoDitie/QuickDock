@@ -33,6 +33,72 @@ public partial class DockItemControl : System.Windows.Controls.UserControl
         {
             LoadIcon(item);
         }
+        else if (DataContext is ToolItem tool)
+        {
+            LoadToolIcon(tool);
+        }
+    }
+
+    private void LoadToolIcon(ToolItem tool)
+    {
+        try
+        {
+            if (!string.IsNullOrEmpty(tool.CustomIconPath))
+            {
+                if (File.Exists(tool.CustomIconPath))
+                {
+                    var bitmap = new BitmapImage();
+                    bitmap.BeginInit();
+                    bitmap.UriSource = new Uri(tool.CustomIconPath, UriKind.Absolute);
+                    bitmap.CacheOption = BitmapCacheOption.OnLoad;
+                    bitmap.EndInit();
+                    ItemIconBrush.ImageSource = bitmap;
+                    FallbackText.Visibility = Visibility.Collapsed;
+                    IconBorder.Visibility = Visibility.Visible;
+                    return;
+                }
+            }
+
+            if (File.Exists(tool.ExePath))
+            {
+                var icon = System.Drawing.Icon.ExtractAssociatedIcon(tool.ExePath);
+                if (icon != null)
+                {
+                    ConvertIconToBitmapSource(icon);
+                    return;
+                }
+            }
+        }
+        catch { }
+
+        var defaultIcon = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "icons", "tools.png");
+        if (File.Exists(defaultIcon))
+        {
+            try
+            {
+                var bitmap = new BitmapImage();
+                bitmap.BeginInit();
+                bitmap.UriSource = new Uri(defaultIcon, UriKind.Absolute);
+                bitmap.CacheOption = BitmapCacheOption.OnLoad;
+                bitmap.EndInit();
+                ItemIconBrush.ImageSource = bitmap;
+                FallbackText.Visibility = Visibility.Collapsed;
+                IconBorder.Visibility = Visibility.Visible;
+                return;
+            }
+            catch { }
+        }
+
+        ShowToolFallback(tool);
+    }
+
+    private void ShowToolFallback(ToolItem tool)
+    {
+        FallbackText.Text = tool.DisplayName.Length > 2 
+            ? tool.DisplayName.Substring(0, 2).ToUpper() 
+            : tool.DisplayName.ToUpper();
+        FallbackText.Visibility = Visibility.Visible;
+        IconBorder.Visibility = Visibility.Collapsed;
     }
 
     private void LoadIcon(DockItem item)
@@ -215,6 +281,13 @@ public partial class DockItemControl : System.Windows.Controls.UserControl
             if (Window.GetWindow(this) is MainWindow mainWindow)
             {
                 mainWindow.LaunchItem(item);
+            }
+        }
+        else if (DataContext is ToolItem tool)
+        {
+            if (Window.GetWindow(this) is MainWindow mainWindow)
+            {
+                mainWindow.LaunchToolItem(tool);
             }
         }
     }

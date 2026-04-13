@@ -49,6 +49,7 @@ public partial class ItemEditWindow : Window
         }
         
         _initialized = true;
+        UpdateTypeVisibility();
         ApplyLanguage();
     }
 
@@ -71,6 +72,12 @@ public partial class ItemEditWindow : Window
     private void OnTypeChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
     {
         if (!_initialized || TypeComboBox.SelectedIndex < 0) return;
+        UpdateTypeVisibility();
+    }
+
+    private void UpdateTypeVisibility()
+    {
+        if (TypeComboBox.SelectedIndex < 0) return;
         
         var type = _types[TypeComboBox.SelectedIndex];
         BrowseButton.Visibility = type == DockItemType.WebPage ? Visibility.Collapsed : Visibility.Visible;

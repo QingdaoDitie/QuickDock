@@ -2,12 +2,16 @@ using System.Collections.ObjectModel;
 using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 using QuickDock.Models;
 using QuickDock.Services;
 using QuickDock.Windows;
 using QuickDock.Controls;
+
+using WpfColor = System.Windows.Media.Color;
+using WpfColorConverter = System.Windows.Media.ColorConverter;
 
 namespace QuickDock;
 
@@ -32,8 +36,11 @@ public partial class MainWindow : Window
     private double _baseWindowHeight = 70;
     private bool _hasShownStartupAnimation = false;
     private const int DesiredFrameRate = 120;
+    private bool _isToolsExpanded;
+    private bool _suppressSizeChange;
 
     public ObservableCollection<DockItem> Items { get; }
+    public ObservableCollection<ToolItem> Tools { get; }
 
     public MainWindow(ConfigService configService)
     {
@@ -46,6 +53,10 @@ public partial class MainWindow : Window
         StatusControl.StatusService = _statusService;
         
         Items = new ObservableCollection<DockItem>(_configService.Items);
+        Tools = new ObservableCollection<ToolItem>(
+            _configService.Settings.ToolsItems
+                .Where(t => t.IsConfirmed)
+                .OrderBy(t => t.Order));
         DataContext = this;
 
         _mouseCheckTimer = new System.Windows.Threading.DispatcherTimer
@@ -88,6 +99,15 @@ public partial class MainWindow : Window
         ApplyScale();
         ApplyIconSpacing();
         ApplyStatusBarVisibility();
+        ApplyToolsButtonVisibility();
+        ApplyToolsIconSpacing();
+    }
+
+    private void ApplyToolsButtonVisibility()
+    {
+        ToolsButton.Visibility = _configService.Settings.ToolsEnabled
+            ? Visibility.Visible
+            : Visibility.Collapsed;
     }
 
     private void ApplyStatusBarVisibility()
@@ -104,12 +124,14 @@ public partial class MainWindow : Window
     {
         try
         {
-            var color = (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString(_configService.Settings.BackgroundColor);
+            var color = (WpfColor)WpfColorConverter.ConvertFromString(_configService.Settings.BackgroundColor);
             DockBorder.Background = new SolidColorBrush(color);
+            ToolsPanel.Background = new SolidColorBrush(color);
         }
         catch
         {
-            DockBorder.Background = new SolidColorBrush(System.Windows.Media.Color.FromRgb(0x1e, 0x1e, 0x1e));
+            DockBorder.Background = new SolidColorBrush(WpfColor.FromRgb(0x1e, 0x1e, 0x1e));
+            ToolsPanel.Background = new SolidColorBrush(WpfColor.FromRgb(0x1e, 0x1e, 0x1e));
         }
     }
 
@@ -127,6 +149,16 @@ public partial class MainWindow : Window
         DockItems.ItemContainerStyle = style;
     }
 
+    private void ApplyToolsIconSpacing()
+    {
+        var spacing = _configService.Settings.IconSpacing;
+        var style = new Style(typeof(ContentPresenter));
+        style.Setters.Add(new Setter(MarginProperty, new Thickness(spacing / 2, 0, spacing / 2, 0)));
+        ToolsItemsControl.ItemContainerStyle = style;
+    }
+
+    private ItemsControl ToolsItemsControl => ToolsItems;
+
     public void RefreshOpacity()
     {
         ApplyOpacity();
@@ -136,6 +168,7 @@ public partial class MainWindow : Window
     {
         ApplySettings();
         RefreshItems();
+        RefreshTools();
         PositionWindow();
     }
 
@@ -145,6 +178,22 @@ public partial class MainWindow : Window
         foreach (var item in _configService.Items)
         {
             Items.Add(item);
+        }
+    }
+
+    public void RefreshTools()
+    {
+        Tools.Clear();
+        foreach (var tool in _configService.Settings.ToolsItems
+                     .Where(t => t.IsConfirmed)
+                     .OrderBy(t => t.Order))
+        {
+            Tools.Add(tool);
+        }
+        
+        if (_isToolsExpanded && Tools.Count == 0)
+        {
+            CollapseToolsPanel();
         }
     }
 
@@ -198,6 +247,11 @@ public partial class MainWindow : Window
 
         _mouseCheckTimer.Stop();
         _isAnimating = true;
+
+        if (_isToolsExpanded)
+        {
+            CollapseToolsPanel();
+        }
         
         var scaledHeight = GetScaledHeight();
         var animation = new DoubleAnimation
@@ -229,6 +283,9 @@ public partial class MainWindow : Window
             return;
         }
 
+        if (System.Windows.Input.Mouse.LeftButton == System.Windows.Input.MouseButtonState.Pressed)
+            return;
+
         if (!GetCursorPos(out POINT point))
             return;
 
@@ -251,14 +308,166 @@ public partial class MainWindow : Window
     {
         if (!_isAnimating && !_isHidden)
         {
-            SlideOut();
+            var position = e.GetPosition(MainGrid);
+            if (position.Y > MainGrid.ActualHeight || position.X < 0 || position.X > MainGrid.ActualWidth)
+            {
+                SlideOut();
+            }
         }
+    }
+
+    private void OnToolsButtonClick(object sender, RoutedEventArgs e)
+    {
+        if (!_configService.Settings.ToolsEnabled) return;
+        
+        if (Tools.Count == 0) return;
+
+        if (_isToolsExpanded)
+        {
+            CollapseToolsPanel();
+        }
+        else
+        {
+            ExpandToolsPanel();
+        }
+    }
+
+    private void ExpandToolsPanel()
+    {
+        _isToolsExpanded = true;
+        _suppressSizeChange = true;
+        
+        var currentWidth = ActualWidth;
+        Width = currentWidth;
+        
+        ToolsPanel.Visibility = Visibility.Visible;
+        
+        var targetHeight = _baseWindowHeight * _configService.Settings.Scale;
+        var animation = new DoubleAnimation
+        {
+            From = 0,
+            To = targetHeight,
+            Duration = TimeSpan.FromSeconds(0.15),
+            EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut },
+            FillBehavior = FillBehavior.Stop
+        };
+        
+        animation.Completed += (s, e) =>
+        {
+            ToolsPanel.Height = double.NaN;
+            Width = double.NaN;
+            _suppressSizeChange = false;
+        };
+        
+        ToolsPanel.BeginAnimation(HeightProperty, animation);
+    }
+
+    private void CollapseToolsPanel()
+    {
+        _isToolsExpanded = false;
+        _suppressSizeChange = true;
+        
+        var currentWidth = ActualWidth;
+        Width = currentWidth;
+        
+        var targetHeight = ToolsPanel.ActualHeight;
+        if (targetHeight <= 0) targetHeight = _baseWindowHeight * _configService.Settings.Scale;
+        
+        ToolsPanel.Height = targetHeight;
+        
+        var animation = new DoubleAnimation
+        {
+            From = targetHeight,
+            To = 0,
+            Duration = TimeSpan.FromSeconds(0.15),
+            EasingFunction = new CubicEase { EasingMode = EasingMode.EaseIn },
+            FillBehavior = FillBehavior.Stop
+        };
+        
+        animation.Completed += (s, e) =>
+        {
+            ToolsPanel.Visibility = Visibility.Collapsed;
+            ToolsPanel.Height = 0;
+            Width = double.NaN;
+            _suppressSizeChange = false;
+        };
+        
+        ToolsPanel.BeginAnimation(HeightProperty, animation);
     }
 
     public void LaunchItem(DockItem item)
     {
         _launchService.Launch(item);
         SlideOut();
+    }
+
+    public void LaunchToolItem(ToolItem tool)
+    {
+        _launchService.LaunchApplication(tool.ExePath);
+        SlideOut();
+    }
+
+    private void OnWindowDragEnter(object sender, System.Windows.DragEventArgs e)
+    {
+        HandleDragEvent(e);
+    }
+
+    private void OnWindowDragOver(object sender, System.Windows.DragEventArgs e)
+    {
+        HandleDragEvent(e);
+    }
+
+    private void HandleDragEvent(System.Windows.DragEventArgs e)
+    {
+        if (e.Data.GetDataPresent(System.Windows.DataFormats.FileDrop))
+        {
+            var files = (string[]?)e.Data.GetData(System.Windows.DataFormats.FileDrop);
+            if (files != null)
+            {
+                foreach (var file in files)
+                {
+                    var ext = System.IO.Path.GetExtension(file).ToLower();
+                    if (ext == ".exe" || ext == ".lnk")
+                    {
+                        e.Effects = System.Windows.DragDropEffects.Copy;
+                        e.Handled = true;
+                        return;
+                    }
+                }
+            }
+        }
+        e.Effects = System.Windows.DragDropEffects.None;
+        e.Handled = true;
+    }
+
+    private void OnWindowDrop(object sender, System.Windows.DragEventArgs e)
+    {
+        if (!e.Data.GetDataPresent(System.Windows.DataFormats.FileDrop)) return;
+
+        var files = (string[]?)e.Data.GetData(System.Windows.DataFormats.FileDrop);
+        if (files == null) return;
+
+        foreach (var file in files)
+        {
+            var ext = System.IO.Path.GetExtension(file).ToLower();
+            if (ext != ".exe" && ext != ".lnk") continue;
+
+            var name = System.IO.Path.GetFileNameWithoutExtension(file);
+            
+            var exists = _configService.Items.Any(i => 
+                i.Path.Equals(file, StringComparison.OrdinalIgnoreCase));
+            if (exists) continue;
+
+            var item = new DockItem
+            {
+                Name = name,
+                Type = DockItemType.Application,
+                Path = file
+            };
+            _configService.Items.Add(item);
+            Items.Add(item);
+        }
+        _configService.Save();
     }
 
     public void OpenSettings()
@@ -274,6 +483,7 @@ public partial class MainWindow : Window
     protected override void OnRenderSizeChanged(SizeChangedInfo sizeInfo)
     {
         base.OnRenderSizeChanged(sizeInfo);
+        if (_suppressSizeChange) return;
         var screenWidth = SystemParameters.PrimaryScreenWidth;
         Left = (screenWidth - ActualWidth) / 2;
     }

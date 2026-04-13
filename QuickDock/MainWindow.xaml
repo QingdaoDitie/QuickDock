@@ -11,34 +11,83 @@
         ResizeMode="NoResize"
         Width="Auto"
         Height="Auto"
-        SizeToContent="WidthAndHeight">
+        SizeToContent="WidthAndHeight"
+        AllowDrop="True"
+        DragEnter="OnWindowDragEnter"
+        DragOver="OnWindowDragOver"
+        Drop="OnWindowDrop">
     
     <Window.Resources>
     </Window.Resources>
 
     <Grid x:Name="MainGrid">
-        <Border x:Name="DockBorder"
-                Style="{StaticResource DockPanelStyle}"
-                Padding="10,8"
-                HorizontalAlignment="Center"
-                MouseLeave="OnDockMouseLeave">
-            <StackPanel Orientation="Horizontal">
-                <local:StatusControl x:Name="StatusControl" Margin="0,0,10,0"/>
-                <Border Width="1" Background="#444" Margin="0,4,10,4"/>
-                <ItemsControl x:Name="DockItems" 
-                              ItemsSource="{Binding Items}">
+        <StackPanel>
+            <Border x:Name="DockBorder"
+                    Style="{StaticResource DockPanelStyle}"
+                    Padding="10,8"
+                    HorizontalAlignment="Center"
+                    MouseLeave="OnDockMouseLeave">
+                <StackPanel Orientation="Horizontal">
+                    <local:StatusControl x:Name="StatusControl" Margin="0,0,10,0"/>
+                    <Border Width="1" Background="#444" Margin="0,4,10,4"/>
+                    <ItemsControl x:Name="DockItems" 
+                                  ItemsSource="{Binding Items}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel x:Name="ItemsPanel" Orientation="Horizontal"/>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <local:DockItemControl x:Name="DockItem"/>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                    <Button x:Name="ToolsButton"
+                            Style="{StaticResource DockItemButtonStyle}"
+                            Click="OnToolsButtonClick"
+                            ToolTip="工具集合"
+                            Visibility="Collapsed">
+                        <Grid>
+                            <Border HorizontalAlignment="Center"
+                                    VerticalAlignment="Center">
+                                <Rectangle Width="32" Height="32"
+                                           RadiusX="6" RadiusY="6"
+                                           Fill="#444"/>
+                            </Border>
+                            <TextBlock Text="T"
+                                       FontSize="16"
+                                       FontWeight="Bold"
+                                       Foreground="#ccc"
+                                       HorizontalAlignment="Center"
+                                       VerticalAlignment="Center"/>
+                        </Grid>
+                    </Button>
+                </StackPanel>
+            </Border>
+            
+            <Border x:Name="ToolsPanel"
+                    Style="{StaticResource DockPanelStyle}"
+                    Padding="10,8"
+                    Width="{Binding ActualWidth, ElementName=DockBorder}"
+                    Visibility="Collapsed"
+                    Height="0"
+                    ClipToBounds="True">
+                <ItemsControl x:Name="ToolsItems" 
+                              ItemsSource="{Binding Tools}"
+                              HorizontalAlignment="Center">
                     <ItemsControl.ItemsPanel>
                         <ItemsPanelTemplate>
-                            <StackPanel x:Name="ItemsPanel" Orientation="Horizontal"/>
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center"/>
                         </ItemsPanelTemplate>
                     </ItemsControl.ItemsPanel>
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
-                            <local:DockItemControl x:Name="DockItem"/>
+                            <local:DockItemControl x:Name="ToolItem"/>
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
-            </StackPanel>
-        </Border>
+            </Border>
+        </StackPanel>
     </Grid>
 </Window>

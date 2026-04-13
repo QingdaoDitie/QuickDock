@@ -51,7 +51,6 @@ public class HotZoneService : IDisposable
     private readonly int _triggerDelayMs;
     private readonly int _edgeSize;
     private bool _isInHotZone;
-    private bool _pendingTrigger;
     private bool _disposed;
     private DateTime _hotZoneEnterTime;
     private bool _isWaitingForDelay;
@@ -102,6 +101,14 @@ public class HotZoneService : IDisposable
             if (_isInHotZone)
                 return;
 
+            if (isLeftButtonDown)
+            {
+                _isWaitingForDelay = false;
+                _isInHotZone = true;
+                HotZoneEntered?.Invoke();
+                return;
+            }
+
             if (!_isWaitingForDelay)
             {
                 _isWaitingForDelay = true;
@@ -109,18 +116,9 @@ public class HotZoneService : IDisposable
                 return;
             }
 
-            if (isLeftButtonDown)
-            {
-                _pendingTrigger = true;
-                return;
-            }
-
             var elapsed = (DateTime.Now - _hotZoneEnterTime).TotalMilliseconds;
             if (elapsed < _triggerDelayMs)
                 return;
-
-            if (_pendingTrigger)
-                _pendingTrigger = false;
 
             _isWaitingForDelay = false;
             _isInHotZone = true;
@@ -128,7 +126,6 @@ public class HotZoneService : IDisposable
         }
         else
         {
-            _pendingTrigger = false;
             _isWaitingForDelay = false;
             if (_isInHotZone)
             {

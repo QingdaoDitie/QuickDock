@@ -2,20 +2,72 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="QuickDock Settings"
-        Width="500"
-        Height="860"
+        Width="720"
+        Height="580"
         WindowStartupLocation="CenterScreen"
         ResizeMode="NoResize"
         Topmost="True"
-        Background="White">
+        Background="#fafafa">
     
     <Window.Resources>
-        <Style x:Key="SettingsButtonStyle" TargetType="Button">
+        <Style x:Key="NavButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="#666"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="16,10"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="HorizontalContentAlignment" Value="Left"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bd" 
+                                Background="{TemplateBinding Background}"
+                                Padding="{TemplateBinding Padding}"
+                                BorderThickness="3,0,0,0"
+                                BorderBrush="Transparent">
+                            <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" 
+                                              VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="#f0f0f0"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style x:Key="ActiveNavButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="#f0f0f0"/>
+            <Setter Property="Foreground" Value="#1a1a1a"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="16,10"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="HorizontalContentAlignment" Value="Left"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}"
+                                Padding="{TemplateBinding Padding}"
+                                BorderThickness="3,0,0,0"
+                                BorderBrush="#1a1a1a">
+                            <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" 
+                                              VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style x:Key="ActionButtonStyle" TargetType="Button">
             <Setter Property="Background" Value="#e8e8e8"/>
             <Setter Property="Foreground" Value="#333"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="BorderBrush" Value="#ccc"/>
-            <Setter Property="Padding" Value="10,5"/>
+            <Setter Property="Padding" Value="14,6"/>
+            <Setter Property="FontSize" Value="12"/>
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="Template">
                 <Setter.Value>
@@ -26,8 +78,7 @@
                                 BorderThickness="{TemplateBinding BorderThickness}"
                                 CornerRadius="4"
                                 Padding="{TemplateBinding Padding}">
-                            <ContentPresenter HorizontalAlignment="Center" 
-                                              VerticalAlignment="Center"/>
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
@@ -38,12 +89,38 @@
                 </Setter.Value>
             </Setter>
         </Style>
+        <Style x:Key="PrimaryButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="#1a1a1a"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="14,6"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bd" 
+                                Background="{TemplateBinding Background}"
+                                CornerRadius="4"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="#333"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
         <Style x:Key="TextBoxStyle" TargetType="TextBox">
-            <Setter Property="Background" Value="#f5f5f5"/>
+            <Setter Property="Background" Value="White"/>
             <Setter Property="Foreground" Value="#333"/>
-            <Setter Property="BorderBrush" Value="#ccc"/>
+            <Setter Property="BorderBrush" Value="#ddd"/>
             <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="Padding" Value="8,5"/>
+            <Setter Property="Padding" Value="8,6"/>
+            <Setter Property="FontSize" Value="12"/>
             <Setter Property="VerticalContentAlignment" Value="Center"/>
             <Setter Property="Template">
                 <Setter.Value>
@@ -60,411 +137,261 @@
             </Setter>
         </Style>
         <Style x:Key="ComboBoxStyle" TargetType="ComboBox">
-            <Setter Property="Background" Value="#f5f5f5"/>
+            <Setter Property="Background" Value="White"/>
             <Setter Property="Foreground" Value="#333"/>
-            <Setter Property="BorderBrush" Value="#ccc"/>
+            <Setter Property="BorderBrush" Value="#ddd"/>
             <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Padding" Value="8,4"/>
+        </Style>
+        <Style x:Key="SectionTitleStyle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="#1a1a1a"/>
+            <Setter Property="Margin" Value="0,0,0,16"/>
+        </Style>
+        <Style x:Key="SettingRowStyle" TargetType="Grid">
+            <Setter Property="Margin" Value="0,0,0,14"/>
+        </Style>
+        <Style x:Key="SettingLabelStyle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Foreground" Value="#555"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+        <Style x:Key="SliderValueStyle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="Foreground" Value="#999"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="Width" Value="45"/>
+            <Setter Property="TextAlignment" Value="Right"/>
         </Style>
     </Window.Resources>
-    
-    <Grid Margin="20">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-        </Grid.RowDefinitions>
 
-        <TextBlock Grid.Row="0" 
-                   x:Name="DockItemsLabel"
-                   Text="Dock Items" 
-                   FontSize="16" 
-                   FontWeight="Bold"
-                   Foreground="#333"
-                   Margin="0,0,0,10"/>
-
-        <Grid Grid.Row="1">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="Auto"/>
-            </Grid.ColumnDefinitions>
-
-            <ListBox x:Name="ItemsListBox"
-                     Grid.Column="0"
-                     Background="#f5f5f5"
-                     BorderBrush="#ddd"
-                     Foreground="#333"
-                     SelectionMode="Single"
-                     DisplayMemberPath="Name"
-                     SelectionChanged="OnItemSelected"/>
-
-            <StackPanel Grid.Column="1" Margin="10,0,0,0" Width="80">
-                <Button x:Name="AddButton"
-                        Content="Add" 
-                        Style="{StaticResource SettingsButtonStyle}"
-                        Click="OnAddClick"
-                        Margin="0,0,0,5"/>
-                <Button x:Name="EditButton"
-                        Content="Edit" 
-                        Style="{StaticResource SettingsButtonStyle}"
-                        Click="OnEditClick"
-                        Margin="0,0,0,5"
-                        IsEnabled="False"/>
-                <Button x:Name="DeleteButton"
-                        Content="Delete" 
-                        Style="{StaticResource SettingsButtonStyle}"
-                        Click="OnDeleteClick"
-                        Margin="0,0,0,5"
-                        IsEnabled="False"/>
-                <Separator Background="#ddd" Margin="0,5"/>
-                <Button x:Name="UpButton"
-                        Content="Up" 
-                        Style="{StaticResource SettingsButtonStyle}"
-                        Click="OnMoveUpClick"
-                        Margin="0,0,0,5"
-                        IsEnabled="False"/>
-                <Button x:Name="DownButton"
-                        Content="Down" 
-                        Style="{StaticResource SettingsButtonStyle}"
-                        Click="OnMoveDownClick"
-                        IsEnabled="False"/>
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="160"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+        
+        <Border Grid.Column="0" Background="White" BorderBrush="#eee" BorderThickness="0,0,1,0">
+            <StackPanel Margin="0,20,0,0">
+                <TextBlock Text="QuickDock" FontSize="15" FontWeight="Bold" Foreground="#1a1a1a" Margin="20,0,0,20"/>
+                <Button x:Name="NavBasic" Content="基础设置" Style="{StaticResource ActiveNavButtonStyle}" Click="OnNavClick"/>
+                <Button x:Name="NavAppearance" Content="外观设置" Style="{StaticResource NavButtonStyle}" Click="OnNavClick"/>
+                <Button x:Name="NavDockItems" Content="快捷方式" Style="{StaticResource NavButtonStyle}" Click="OnNavClick"/>
+                <Button x:Name="NavHotZone" Content="热区设置" Style="{StaticResource NavButtonStyle}" Click="OnNavClick"/>
+                <Button x:Name="NavTools" Content="工具集合" Style="{StaticResource NavButtonStyle}" Click="OnNavClick"/>
             </StackPanel>
-        </Grid>
-
-        <Grid Grid.Row="2" Margin="0,15,0,0">
+        </Border>
+        
+        <Grid Grid.Column="1" Margin="24,20,24,20">
             <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
                 <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
             
-            <Border Grid.Row="0" 
-                    Background="#f0f0f0" 
-                    Padding="12,8" 
-                    CornerRadius="4"
-                    Cursor="Hand"
-                    MouseLeftButtonDown="OnAutoStartClick">
+            <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto">
                 <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="Auto"/>
-                    </Grid.ColumnDefinitions>
                     
-                    <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                        <TextBlock x:Name="AutoStartTitleText"
-                                   Text="开机自启" 
-                                   FontSize="14" 
-                                   FontWeight="Medium"
-                                   Foreground="#333"/>
-                        <TextBlock x:Name="AutoStartDescText"
-                                   Text="启动 Windows 时自动运行 QuickDock" 
-                                   FontSize="11" 
-                                   Foreground="#999"
-                                   Margin="0,2,0,0"/>
+                    <StackPanel x:Name="PageBasic" Visibility="Visible">
+                        <TextBlock x:Name="BasicTitle" Text="基础设置" Style="{StaticResource SectionTitleStyle}"/>
+                        
+                        <Grid Style="{StaticResource SettingRowStyle}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="80"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock x:Name="LanguageLabel" Text="Language" Style="{StaticResource SettingLabelStyle}"/>
+                            <ComboBox Grid.Column="1" x:Name="LanguageComboBox" Style="{StaticResource ComboBoxStyle}" SelectionChanged="OnLanguageChanged"/>
+                        </Grid>
+
+                        <Border Background="White" BorderBrush="#eee" BorderThickness="1" CornerRadius="4" Padding="12,10" Margin="0,0,0,14"
+                                Cursor="Hand" MouseLeftButtonDown="OnAutoStartClick">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel>
+                                    <TextBlock x:Name="AutoStartTitleText" Text="开机自启" FontSize="12" Foreground="#333"/>
+                                    <TextBlock x:Name="AutoStartDescText" Text="启动 Windows 时自动运行" FontSize="10" Foreground="#999" Margin="0,2,0,0"/>
+                                </StackPanel>
+                                <Border Grid.Column="1" x:Name="AutoStartToggle" Width="40" Height="22" Background="#ccc" CornerRadius="11" VerticalAlignment="Center">
+                                    <Border x:Name="AutoStartToggleKnob" Width="18" Height="18" Background="White" CornerRadius="9" HorizontalAlignment="Left" Margin="2,0"/>
+                                </Border>
+                            </Grid>
+                        </Border>
+
+                        <Grid Style="{StaticResource SettingRowStyle}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="80"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock x:Name="ShowStatusBarLabel" Text="状态栏" Style="{StaticResource SettingLabelStyle}"/>
+                            <CheckBox Grid.Column="1" x:Name="ShowStatusBarCheckBox" VerticalAlignment="Center" Checked="OnShowStatusBarChanged" Unchecked="OnShowStatusBarChanged"/>
+                        </Grid>
+
+                        <Grid Style="{StaticResource SettingRowStyle}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="80"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock x:Name="WeatherCityLabel" Text="Weather" Style="{StaticResource SettingLabelStyle}"/>
+                            <TextBox Grid.Column="1" x:Name="WeatherCityTextBox" Style="{StaticResource TextBoxStyle}" TextChanged="OnWeatherCityChanged"/>
+                        </Grid>
+                    </StackPanel>
+
+                    <StackPanel x:Name="PageAppearance" Visibility="Collapsed">
+                        <TextBlock x:Name="AppearanceTitle" Text="外观设置" Style="{StaticResource SectionTitleStyle}"/>
+                        
+                        <Grid Style="{StaticResource SettingRowStyle}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="80"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock x:Name="BackgroundColorLabel" Text="背景色" Style="{StaticResource SettingLabelStyle}"/>
+                            <TextBox Grid.Column="1" x:Name="BackgroundColorTextBox" Style="{StaticResource TextBoxStyle}" TextChanged="OnBackgroundColorChanged"/>
+                            <Border Grid.Column="2" x:Name="BackgroundColorPreview" Width="28" Height="22" Background="#1e1e1e" CornerRadius="3" Margin="8,0,0,0" VerticalAlignment="Center"/>
+                        </Grid>
+
+                        <Grid Style="{StaticResource SettingRowStyle}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="80"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock x:Name="OpacityLabel" Text="透明度" Style="{StaticResource SettingLabelStyle}"/>
+                            <Slider Grid.Column="1" x:Name="OpacitySlider" Minimum="0.3" Maximum="1.0" TickFrequency="0.1" IsSnapToTickEnabled="True" VerticalAlignment="Center" ValueChanged="OnOpacityChanged"/>
+                            <TextBlock Grid.Column="2" x:Name="OpacityValue" Text="90%" Style="{StaticResource SliderValueStyle}"/>
+                        </Grid>
+
+                        <Grid Style="{StaticResource SettingRowStyle}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="80"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock x:Name="ScaleLabel" Text="缩放" Style="{StaticResource SettingLabelStyle}"/>
+                            <Slider Grid.Column="1" x:Name="ScaleSlider" Minimum="0.5" Maximum="2.0" TickFrequency="0.1" IsSnapToTickEnabled="True" VerticalAlignment="Center" ValueChanged="OnScaleChanged"/>
+                            <TextBlock Grid.Column="2" x:Name="ScaleValue" Text="100%" Style="{StaticResource SliderValueStyle}"/>
+                        </Grid>
+
+                        <Grid Style="{StaticResource SettingRowStyle}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="80"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock x:Name="IconSizeLabel" Text="图标大小" Style="{StaticResource SettingLabelStyle}"/>
+                            <Slider Grid.Column="1" x:Name="IconSizeSlider" Minimum="16" Maximum="64" TickFrequency="4" IsSnapToTickEnabled="True" VerticalAlignment="Center" ValueChanged="OnIconSizeChanged"/>
+                            <TextBlock Grid.Column="2" x:Name="IconSizeValue" Text="32px" Style="{StaticResource SliderValueStyle}"/>
+                        </Grid>
+
+                        <Grid Style="{StaticResource SettingRowStyle}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="80"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock x:Name="IconSpacingLabel" Text="图标间距" Style="{StaticResource SettingLabelStyle}"/>
+                            <Slider Grid.Column="1" x:Name="IconSpacingSlider" Minimum="0" Maximum="20" TickFrequency="1" IsSnapToTickEnabled="True" VerticalAlignment="Center" ValueChanged="OnIconSpacingChanged"/>
+                            <TextBlock Grid.Column="2" x:Name="IconSpacingValue" Text="5px" Style="{StaticResource SliderValueStyle}"/>
+                        </Grid>
+                    </StackPanel>
+
+                    <StackPanel x:Name="PageDockItems" Visibility="Collapsed">
+                        <TextBlock x:Name="DockItemsLabel" Text="快捷方式管理" Style="{StaticResource SectionTitleStyle}"/>
+                        
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+
+                            <ListBox Grid.Column="0" x:Name="ItemsListBox" Background="White" BorderBrush="#ddd" Foreground="#333" 
+                                     SelectionMode="Single" DisplayMemberPath="Name" SelectionChanged="OnItemSelected" Height="280"/>
+
+                            <StackPanel Grid.Column="1" Margin="10,0,0,0" Width="72">
+                                <Button x:Name="AddButton" Content="+" Style="{StaticResource ActionButtonStyle}" Click="OnAddClick" Margin="0,0,0,6" FontWeight="Bold" FontSize="14"/>
+                                <Button x:Name="EditButton" Content="Edit" Style="{StaticResource ActionButtonStyle}" Click="OnEditClick" Margin="0,0,0,6" IsEnabled="False"/>
+                                <Button x:Name="DeleteButton" Content="Del" Style="{StaticResource ActionButtonStyle}" Click="OnDeleteClick" Margin="0,0,0,6" IsEnabled="False"/>
+                                <Separator Background="#eee" Margin="0,4"/>
+                                <Button x:Name="UpButton" Content="Up" Style="{StaticResource ActionButtonStyle}" Click="OnMoveUpClick" Margin="0,6,0,6" IsEnabled="False"/>
+                                <Button x:Name="DownButton" Content="Down" Style="{StaticResource ActionButtonStyle}" Click="OnMoveDownClick" IsEnabled="False"/>
+                            </StackPanel>
+                        </Grid>
+                    </StackPanel>
+
+                    <StackPanel x:Name="PageHotZone" Visibility="Collapsed">
+                        <TextBlock x:Name="HotZoneTitle" Text="热区设置" Style="{StaticResource SectionTitleStyle}"/>
+                        
+                        <Grid Style="{StaticResource SettingRowStyle}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="80"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock x:Name="TriggerDelayLabel" Text="触发延迟" Style="{StaticResource SettingLabelStyle}"/>
+                            <Slider Grid.Column="1" x:Name="TriggerDelaySlider" Minimum="0" Maximum="2000" TickFrequency="100" IsSnapToTickEnabled="True" VerticalAlignment="Center" ValueChanged="OnTriggerDelayChanged"/>
+                            <TextBlock Grid.Column="2" x:Name="TriggerDelayValue" Text="500ms" Style="{StaticResource SliderValueStyle}" Width="50"/>
+                        </Grid>
+
+                        <Grid Style="{StaticResource SettingRowStyle}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="80"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock x:Name="EdgeSizeLabel" Text="边缘范围" Style="{StaticResource SettingLabelStyle}"/>
+                            <Slider Grid.Column="1" x:Name="EdgeSizeSlider" Minimum="1" Maximum="10" TickFrequency="1" IsSnapToTickEnabled="True" VerticalAlignment="Center" ValueChanged="OnEdgeSizeChanged"/>
+                            <TextBlock Grid.Column="2" x:Name="EdgeSizeValue" Text="1px" Style="{StaticResource SliderValueStyle}"/>
+                        </Grid>
+                    </StackPanel>
+
+                    <StackPanel x:Name="PageTools" Visibility="Collapsed">
+                        <TextBlock x:Name="ToolsSectionLabel" Text="工具集合" Style="{StaticResource SectionTitleStyle}"/>
+                        
+                        <Grid Style="{StaticResource SettingRowStyle}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="80"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock x:Name="ToolsEnabledLabel" Text="启用" Style="{StaticResource SettingLabelStyle}"/>
+                            <CheckBox Grid.Column="1" x:Name="ToolsEnabledCheckBox" VerticalAlignment="Center" Checked="OnToolsEnabledChanged" Unchecked="OnToolsEnabledChanged"/>
+                        </Grid>
+
+                        <Grid Style="{StaticResource SettingRowStyle}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="80"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock x:Name="ToolsRootPathLabel" Text="路径" Style="{StaticResource SettingLabelStyle}"/>
+                            <TextBox Grid.Column="1" x:Name="ToolsRootPathTextBox" Style="{StaticResource TextBoxStyle}"/>
+                            <Button Grid.Column="2" x:Name="ToolsBrowseButton" Content="..." Style="{StaticResource ActionButtonStyle}" Click="OnToolsBrowseClick" Margin="6,0,0,0" Padding="10,6"/>
+                        </Grid>
+
+                        <Border x:Name="ToolsPendingWarning" Background="#fff8e1" BorderBrush="#ffcc02" BorderThickness="1" CornerRadius="4" Padding="10,8" Margin="0,0,0,14"
+                                Visibility="Collapsed" Cursor="Hand" MouseLeftButtonDown="OnToolsGoToManageClick">
+                            <TextBlock x:Name="ToolsPendingWarningText" Text="有 N 个工具需要确认" Foreground="#856404" FontSize="11"/>
+                        </Border>
+
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,14">
+                            <Button x:Name="ToolsScanButton" Content="重新扫描" Style="{StaticResource ActionButtonStyle}" Click="OnToolsScanClick" Margin="0,0,8,0"/>
+                            <Button x:Name="ToolsManageButton" Content="管理工具" Style="{StaticResource ActionButtonStyle}" Click="OnToolsGoToManageClick"/>
+                        </StackPanel>
                     </StackPanel>
                     
-                    <Border Grid.Column="1" 
-                            x:Name="AutoStartToggle"
-                            Width="44" 
-                            Height="24" 
-                            Background="#ccc"
-                            CornerRadius="12"
-                            VerticalAlignment="Center">
-                        <Border x:Name="AutoStartToggleKnob"
-                                Width="20" 
-                                Height="20" 
-                                Background="White"
-                                CornerRadius="10"
-                                HorizontalAlignment="Left"
-                                Margin="2,0"/>
-                    </Border>
                 </Grid>
+            </ScrollViewer>
+
+            <Border Grid.Row="1" BorderBrush="#eee" BorderThickness="0,1,0,0" Padding="0,16,0,0" Margin="0,8,0,0">
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                    <Button x:Name="SaveButton" Content="Save" Style="{StaticResource PrimaryButtonStyle}" Click="OnSaveClick" Margin="0,0,10,0" Padding="24,6"/>
+                    <Button x:Name="CancelButton" Content="Cancel" Style="{StaticResource ActionButtonStyle}" Click="OnCancelClick" Padding="24,6"/>
+                </StackPanel>
             </Border>
         </Grid>
-
-        <Grid Grid.Row="3" Margin="0,10,0,0">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto"/>
-                <ColumnDefinition Width="150"/>
-            </Grid.ColumnDefinitions>
-            
-            <TextBlock Grid.Column="0" 
-                       x:Name="LanguageLabel"
-                       Text="Language:" 
-                       VerticalAlignment="Center"
-                       Foreground="#333"
-                       Margin="0,0,10,0"/>
-            <ComboBox Grid.Column="1"
-                      x:Name="LanguageComboBox"
-                      Style="{StaticResource ComboBoxStyle}"
-                      SelectionChanged="OnLanguageChanged"/>
-        </Grid>
-
-        <Grid Grid.Row="4" Margin="0,10,0,0">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto"/>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="Auto"/>
-            </Grid.ColumnDefinitions>
-            
-            <TextBlock Grid.Column="0" 
-                       x:Name="BackgroundColorLabel"
-                       Text="Background:" 
-                       VerticalAlignment="Center"
-                       Foreground="#333"
-                       Margin="0,0,10,0"/>
-            <TextBox Grid.Column="1"
-                     x:Name="BackgroundColorTextBox"
-                     Style="{StaticResource TextBoxStyle}"
-                     Text="#1e1e1e"
-                     VerticalAlignment="Center"
-                     TextChanged="OnBackgroundColorChanged"/>
-            <Border Grid.Column="2"
-                    x:Name="BackgroundColorPreview"
-                    Width="30"
-                    Height="25"
-                    Background="#1e1e1e"
-                    CornerRadius="3"
-                    Margin="10,0,0,0"
-                    VerticalAlignment="Center"/>
-        </Grid>
-
-        <Grid Grid.Row="5" Margin="0,10,0,0">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto"/>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="Auto"/>
-            </Grid.ColumnDefinitions>
-            
-            <TextBlock Grid.Column="0" 
-                       x:Name="OpacityLabel"
-                       Text="Opacity:" 
-                       VerticalAlignment="Center"
-                       Foreground="#333"
-                       Margin="0,0,10,0"/>
-            <Slider Grid.Column="1"
-                    x:Name="OpacitySlider"
-                    Minimum="0.3"
-                    Maximum="1.0"
-                    TickFrequency="0.1"
-                    IsSnapToTickEnabled="True"
-                    VerticalAlignment="Center"
-                    ValueChanged="OnOpacityChanged"/>
-            <TextBlock Grid.Column="2"
-                       x:Name="OpacityValue"
-                       Text="90%"
-                       VerticalAlignment="Center"
-                       Foreground="#333"
-                       Margin="10,0,0,0"
-                       Width="40"/>
-        </Grid>
-
-        <Grid Grid.Row="6" Margin="0,10,0,0">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto"/>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="Auto"/>
-            </Grid.ColumnDefinitions>
-            
-            <TextBlock Grid.Column="0" 
-                       x:Name="ScaleLabel"
-                       Text="Scale:" 
-                       VerticalAlignment="Center"
-                       Foreground="#333"
-                       Margin="0,0,10,0"/>
-            <Slider Grid.Column="1"
-                    x:Name="ScaleSlider"
-                    Minimum="0.5"
-                    Maximum="2.0"
-                    TickFrequency="0.1"
-                    IsSnapToTickEnabled="True"
-                    VerticalAlignment="Center"
-                    ValueChanged="OnScaleChanged"/>
-            <TextBlock Grid.Column="2"
-                       x:Name="ScaleValue"
-                       Text="100%"
-                       VerticalAlignment="Center"
-                       Foreground="#333"
-                       Margin="10,0,0,0"
-                       Width="40"/>
-        </Grid>
-
-        <Grid Grid.Row="7" Margin="0,10,0,0">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto"/>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="Auto"/>
-            </Grid.ColumnDefinitions>
-            
-            <TextBlock Grid.Column="0" 
-                       x:Name="IconSizeLabel"
-                       Text="Icon Size:" 
-                       VerticalAlignment="Center"
-                       Foreground="#333"
-                       Margin="0,0,10,0"/>
-            <Slider Grid.Column="1"
-                    x:Name="IconSizeSlider"
-                    Minimum="16"
-                    Maximum="64"
-                    TickFrequency="4"
-                    IsSnapToTickEnabled="True"
-                    VerticalAlignment="Center"
-                    ValueChanged="OnIconSizeChanged"/>
-            <TextBlock Grid.Column="2"
-                       x:Name="IconSizeValue"
-                       Text="32px"
-                       VerticalAlignment="Center"
-                       Foreground="#333"
-                       Margin="10,0,0,0"
-                       Width="40"/>
-        </Grid>
-
-        <Grid Grid.Row="8" Margin="0,10,0,0">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto"/>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="Auto"/>
-            </Grid.ColumnDefinitions>
-            
-            <TextBlock Grid.Column="0" 
-                       x:Name="IconSpacingLabel"
-                       Text="Icon Spacing:" 
-                       VerticalAlignment="Center"
-                       Foreground="#333"
-                       Margin="0,0,10,0"/>
-            <Slider Grid.Column="1"
-                    x:Name="IconSpacingSlider"
-                    Minimum="0"
-                    Maximum="20"
-                    TickFrequency="1"
-                    IsSnapToTickEnabled="True"
-                    VerticalAlignment="Center"
-                    ValueChanged="OnIconSpacingChanged"/>
-            <TextBlock Grid.Column="2"
-                       x:Name="IconSpacingValue"
-                       Text="5px"
-                       VerticalAlignment="Center"
-                       Foreground="#333"
-                       Margin="10,0,0,0"
-                       Width="40"/>
-        </Grid>
-
-        <Grid Grid.Row="9" Margin="0,10,0,0">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto"/>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="Auto"/>
-            </Grid.ColumnDefinitions>
-            
-            <TextBlock Grid.Column="0" 
-                       x:Name="TriggerDelayLabel"
-                       Text="Trigger Delay:" 
-                       VerticalAlignment="Center"
-                       Foreground="#333"
-                       Margin="0,0,10,0"/>
-            <Slider Grid.Column="1"
-                    x:Name="TriggerDelaySlider"
-                    Minimum="0"
-                    Maximum="2000"
-                    TickFrequency="100"
-                    IsSnapToTickEnabled="True"
-                    VerticalAlignment="Center"
-                    ValueChanged="OnTriggerDelayChanged"/>
-            <TextBlock Grid.Column="2"
-                       x:Name="TriggerDelayValue"
-                       Text="500ms"
-                       VerticalAlignment="Center"
-                       Foreground="#333"
-                       Margin="10,0,0,0"
-                       Width="50"/>
-        </Grid>
-
-        <Grid Grid.Row="10" Margin="0,10,0,0">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto"/>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="Auto"/>
-            </Grid.ColumnDefinitions>
-            
-            <TextBlock Grid.Column="0" 
-                       x:Name="EdgeSizeLabel"
-                       Text="Edge Size:" 
-                       VerticalAlignment="Center"
-                       Foreground="#333"
-                       Margin="0,0,10,0"/>
-            <Slider Grid.Column="1"
-                    x:Name="EdgeSizeSlider"
-                    Minimum="1"
-                    Maximum="10"
-                    TickFrequency="1"
-                    IsSnapToTickEnabled="True"
-                    VerticalAlignment="Center"
-                    ValueChanged="OnEdgeSizeChanged"/>
-            <TextBlock Grid.Column="2"
-                       x:Name="EdgeSizeValue"
-                       Text="1px"
-                       VerticalAlignment="Center"
-                       Foreground="#333"
-                       Margin="10,0,0,0"
-                       Width="40"/>
-        </Grid>
-
-        <Grid Grid.Row="11" Margin="0,10,0,0">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto"/>
-                <ColumnDefinition Width="*"/>
-            </Grid.ColumnDefinitions>
-            
-            <CheckBox Grid.Column="0"
-                      x:Name="ShowStatusBarCheckBox"
-                      Content="Show Status Bar" 
-                      Foreground="#333"
-                      Checked="OnShowStatusBarChanged"
-                      Unchecked="OnShowStatusBarChanged"
-                      VerticalAlignment="Center"/>
-        </Grid>
-
-        <Grid Grid.Row="12" Margin="0,10,0,0">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto"/>
-                <ColumnDefinition Width="*"/>
-            </Grid.ColumnDefinitions>
-            
-            <TextBlock Grid.Column="0" 
-                       x:Name="WeatherCityLabel"
-                       Text="Weather City:" 
-                       VerticalAlignment="Center"
-                       Foreground="#333"
-                       Margin="0,0,10,0"/>
-            <TextBox Grid.Column="1"
-                     x:Name="WeatherCityTextBox"
-                     Style="{StaticResource TextBoxStyle}"
-                     VerticalAlignment="Center"
-                     TextChanged="OnWeatherCityChanged"/>
-        </Grid>
-
-        <StackPanel Grid.Row="13" 
-                    Orientation="Horizontal" 
-                    HorizontalAlignment="Right"
-                    Margin="0,15,0,0">
-            <Button x:Name="SaveButton"
-                    Content="Save" 
-                    Style="{StaticResource SettingsButtonStyle}"
-                    Click="OnSaveClick"
-                    Margin="0,0,10,0"/>
-            <Button x:Name="CancelButton"
-                    Content="Cancel" 
-                    Style="{StaticResource SettingsButtonStyle}"
-                    Click="OnCancelClick"/>
-        </StackPanel>
     </Grid>
 </Window>

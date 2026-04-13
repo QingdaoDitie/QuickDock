@@ -47,6 +47,12 @@ public class ConfigService
             changed = true;
         }
 
+        if (settings.ToolsItems == null)
+        {
+            settings.ToolsItems = new List<ToolItem>();
+            changed = true;
+        }
+
         if (changed)
         {
             Save();

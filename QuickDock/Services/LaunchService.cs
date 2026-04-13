@@ -39,6 +39,11 @@ public class LaunchService
         }
     }
 
+    public void LaunchApplication(string path, string? arguments = null, bool runAsAdmin = false)
+    {
+        LaunchApplication(path, arguments, runAsAdmin, null);
+    }
+
     private void LaunchApplication(string path, string? arguments, bool runAsAdmin, string? clipboardContent)
     {
         var startInfo = new ProcessStartInfo

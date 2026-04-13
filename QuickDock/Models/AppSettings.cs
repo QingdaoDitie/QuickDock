@@ -17,4 +17,8 @@ public class AppSettings
     
     public bool ShowStatusBar { get; set; } = true;
     public string WeatherCity { get; set; } = "";
+    
+    public bool ToolsEnabled { get; set; } = false;
+    public string ToolsRootPath { get; set; } = "";
+    public List<ToolItem> ToolsItems { get; set; } = new();
 }

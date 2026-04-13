@@ -74,7 +74,28 @@ public static class Lang
         { "Settings.WeatherCity", "天气城市" },
         { "Settings.TriggerDelay", "触发延迟" },
         { "Settings.EdgeSize", "边缘范围" },
-        { "AppendClipboard", "追加剪贴板内容" }
+        { "AppendClipboard", "追加剪贴板内容" },
+        { "Tools.ToolTip", "工具集合" },
+        { "Tools.EmptyHint", "工具集合为空" },
+        { "Settings.ToolsSection", "工具集合" },
+        { "Settings.ToolsEnabled", "启用工具集合" },
+        { "Settings.ToolsRootPath", "工具文件夹路径" },
+        { "Settings.ToolsBrowse", "浏览..." },
+        { "Settings.ToolsScan", "重新扫描" },
+        { "Settings.ToolsManage", "管理工具" },
+        { "Settings.ToolsPendingWarning", "有 {0} 个工具需要确认主程序" },
+        { "Settings.ToolsGoToManage", "前往管理" },
+        { "Tools.Confirm", "已确认" },
+        { "Tools.Pending", "待确认" },
+        { "Tools.SelectMainExe", "选择主程序" },
+        { "Tools.Remove", "移除" },
+        { "Tools.Edit", "编辑" },
+        { "Tools.AutoDetected", "自动识别" },
+        { "Tools.Save", "保存" },
+        { "Tools.NoExeFound", "未找到可执行文件" },
+        { "Tools.PathNotExist", "路径不存在" },
+        { "Tools.ScanComplete", "扫描完成，共找到 {0} 个工具" },
+        { "Tools.ScanHasPending", "，其中 {0} 个需要确认" }
     };
 
     private static readonly Dictionary<string, string> English = new()
@@ -135,6 +156,27 @@ public static class Lang
         { "Settings.WeatherCity", "Weather City" },
         { "Settings.TriggerDelay", "Trigger Delay" },
         { "Settings.EdgeSize", "Edge Size" },
-        { "AppendClipboard", "Append Clipboard Content" }
+        { "AppendClipboard", "Append Clipboard Content" },
+        { "Tools.ToolTip", "Tools" },
+        { "Tools.EmptyHint", "No tools available" },
+        { "Settings.ToolsSection", "Tools Collection" },
+        { "Settings.ToolsEnabled", "Enable Tools" },
+        { "Settings.ToolsRootPath", "Tools Folder Path" },
+        { "Settings.ToolsBrowse", "Browse..." },
+        { "Settings.ToolsScan", "Rescan" },
+        { "Settings.ToolsManage", "Manage Tools" },
+        { "Settings.ToolsPendingWarning", "{0} tool(s) need main program confirmation" },
+        { "Settings.ToolsGoToManage", "Go to Manage" },
+        { "Tools.Confirm", "Confirmed" },
+        { "Tools.Pending", "Pending" },
+        { "Tools.SelectMainExe", "Select main program" },
+        { "Tools.Remove", "Remove" },
+        { "Tools.Edit", "Edit" },
+        { "Tools.AutoDetected", "Auto-detected" },
+        { "Tools.Save", "Save" },
+        { "Tools.NoExeFound", "No executables found" },
+        { "Tools.PathNotExist", "Path does not exist" },
+        { "Tools.ScanComplete", "Scan complete, found {0} tool(s)" },
+        { "Tools.ScanHasPending", ", {0} need confirmation" }
     };
 }
