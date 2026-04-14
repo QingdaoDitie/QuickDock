@@ -12,17 +12,6 @@
         Style="{StaticResource WindowStyle}">
     
     <Window.Resources>
-        <SolidColorBrush x:Key="BackgroundBrush" Color="#f7f7f9"/>
-        <SolidColorBrush x:Key="SecondaryBackgroundBrush" Color="#ffffff"/>
-        <SolidColorBrush x:Key="WindowPanelBrush" Color="#ffffff"/>
-        <SolidColorBrush x:Key="WindowCardBrush" Color="#ffffff"/>
-        <SolidColorBrush x:Key="HoverBackgroundBrush" Color="#eef4ff"/>
-        <SolidColorBrush x:Key="BorderBrush" Color="#d9dde5"/>
-        <SolidColorBrush x:Key="TextBrush" Color="#1f2937"/>
-        <SolidColorBrush x:Key="MutedTextBrush" Color="#6b7280"/>
-        <SolidColorBrush x:Key="HoverTextBrush" Color="#ffffff"/>
-        <SolidColorBrush x:Key="ToggleOffBrush" Color="#c5cad3"/>
-        <SolidColorBrush x:Key="SliderTrackBrush" Color="#d7dce5"/>
         <Style x:Key="NavButtonStyle" TargetType="Button">
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="Foreground" Value="{StaticResource MutedTextBrush}"/>
