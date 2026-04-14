@@ -1,6 +1,7 @@
 using System.Windows;
 using System.Windows.Threading;
 using Hardcodet.Wpf.TaskbarNotification;
+using QuickDock.Models;
 using QuickDock.Services;
 using QuickDock.Windows;
 
@@ -22,6 +23,7 @@ public partial class App : System.Windows.Application
         AppDomain.CurrentDomain.UnhandledException += OnDomainUnhandledException;
 
         _configService = new ConfigService();
+        _configService.SettingsChanged += OnSettingsChanged;
         _autoStartService = new AutoStartService();
         
         if (_configService.Settings.AutoStart)
@@ -128,6 +130,11 @@ public partial class App : System.Windows.Application
 
     private void OnMainWindowMouseLeave(object sender, System.Windows.Input.MouseEventArgs e)
     {
+        if (_mainWindow?.IsAutoHideSuppressed == true)
+        {
+            return;
+        }
+
         _mainWindow?.SlideOut();
     }
 
@@ -146,23 +153,11 @@ public partial class App : System.Windows.Application
         try
         {
             var settingsWindow = new SettingsWindow(_configService!, _autoStartService!);
-            settingsWindow.ShowDialog();
-            
-            if (_hotZoneService != null && _configService != null)
+            if (settingsWindow.ShowDialog() == true)
             {
-                _hotZoneService.Stop();
-                var newService = new HotZoneService(
-                    _configService.Settings.HotZoneWidth,
-                    _configService.Settings.HotZoneTriggerDelay,
-                    _configService.Settings.HotZoneEdgeSize);
-                newService.HotZoneEntered += OnHotZoneEntered;
-                newService.HotZoneLeft += OnHotZoneLeft;
-                newService.Start();
-                _hotZoneService = newService;
+                _mainWindow?.RefreshItems();
+                _mainWindow?.RefreshTools();
             }
-            
-            _mainWindow?.RefreshSettings();
-            UpdateTrayMenuLanguage();
         }
         catch (Exception ex)
         {
@@ -184,8 +179,56 @@ public partial class App : System.Windows.Application
         }
     }
 
+    private void OnSettingsChanged(string? propertyName)
+    {
+        switch (propertyName)
+        {
+            case nameof(AppSettings.Language):
+                UpdateTrayMenuLanguage();
+                break;
+            case nameof(AppSettings.AutoStart):
+                if (_configService?.Settings.AutoStart == true)
+                {
+                    _autoStartService?.Enable();
+                }
+                else
+                {
+                    _autoStartService?.Disable();
+                }
+                break;
+            case nameof(AppSettings.HotZoneWidth):
+            case nameof(AppSettings.HotZoneTriggerDelay):
+            case nameof(AppSettings.HotZoneEdgeSize):
+                RecreateHotZoneService();
+                break;
+        }
+    }
+
+    private void RecreateHotZoneService()
+    {
+        if (_configService == null)
+        {
+            return;
+        }
+
+        _hotZoneService?.Stop();
+        _hotZoneService?.Dispose();
+
+        _hotZoneService = new HotZoneService(
+            _configService.Settings.HotZoneWidth,
+            _configService.Settings.HotZoneTriggerDelay,
+            _configService.Settings.HotZoneEdgeSize);
+        _hotZoneService.HotZoneEntered += OnHotZoneEntered;
+        _hotZoneService.HotZoneLeft += OnHotZoneLeft;
+        _hotZoneService.Start();
+    }
+
     protected override void OnExit(ExitEventArgs e)
     {
+        if (_configService != null)
+        {
+            _configService.SettingsChanged -= OnSettingsChanged;
+        }
         _hotZoneService?.Dispose();
         _taskbarIcon?.Dispose();
         base.OnExit(e);

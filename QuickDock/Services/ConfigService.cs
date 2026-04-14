@@ -1,6 +1,7 @@
 using System.IO;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.ComponentModel;
 using QuickDock.Models;
 
 namespace QuickDock.Services;
@@ -16,6 +17,8 @@ public class ConfigService
         Converters = { new JsonStringEnumConverter() }
     };
 
+    public event Action<string?>? SettingsChanged;
+
     public List<DockItem> Items { get; private set; } = new();
     public AppSettings Settings { get; private set; } = new();
 
@@ -29,6 +32,18 @@ public class ConfigService
     private void ApplyLanguage()
     {
         Lang.CurrentLanguage = Settings.Language == "zh" ? Language.Chinese : Language.English;
+    }
+
+    private void SubscribeToSettings(AppSettings settings)
+    {
+        settings.PropertyChanged -= OnSettingsPropertyChanged;
+        settings.PropertyChanged += OnSettingsPropertyChanged;
+    }
+
+    private void OnSettingsPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        ApplyLanguage();
+        SettingsChanged?.Invoke(e.PropertyName);
     }
 
     private void MigrateSettings(AppSettings settings)
@@ -50,6 +65,66 @@ public class ConfigService
         if (settings.ToolsItems == null)
         {
             settings.ToolsItems = new List<ToolItem>();
+            changed = true;
+        }
+
+        if (settings.ToolIconSize <= 0)
+        {
+            settings.ToolIconSize = 24;
+            changed = true;
+        }
+
+        if (settings.ToolsAnimationDuration <= 0)
+        {
+            settings.ToolsAnimationDuration = 120;
+            changed = true;
+        }
+
+        if (settings.DockShowAnimationDuration <= 0)
+        {
+            settings.DockShowAnimationDuration = settings.AnimationDuration > 0 ? settings.AnimationDuration : 220;
+            changed = true;
+        }
+
+        if (settings.DockHideAnimationDuration <= 0)
+        {
+            settings.DockHideAnimationDuration = settings.AnimationDuration > 0 ? settings.AnimationDuration : 180;
+            changed = true;
+        }
+
+        if (settings.ToolsExpandAnimationDuration <= 0)
+        {
+            settings.ToolsExpandAnimationDuration = settings.ToolsAnimationDuration > 0 ? settings.ToolsAnimationDuration : 140;
+            changed = true;
+        }
+
+        if (settings.ToolsCollapseAnimationDuration <= 0)
+        {
+            settings.ToolsCollapseAnimationDuration = settings.ToolsAnimationDuration > 0 ? settings.ToolsAnimationDuration : 110;
+            changed = true;
+        }
+
+        if (settings.StartupPreviewDuration < 0)
+        {
+            settings.StartupPreviewDuration = 1500;
+            changed = true;
+        }
+
+        if (settings.AutoHideTolerance < 0)
+        {
+            settings.AutoHideTolerance = 10;
+            changed = true;
+        }
+
+        if (settings.WeatherRefreshIntervalMinutes <= 0)
+        {
+            settings.WeatherRefreshIntervalMinutes = 30;
+            changed = true;
+        }
+
+        if (settings.ResourceRefreshIntervalSeconds <= 0)
+        {
+            settings.ResourceRefreshIntervalSeconds = 5;
             changed = true;
         }
 
@@ -79,7 +154,9 @@ public class ConfigService
                 {
                     Items = config.Items ?? new List<DockItem>();
                     Settings = config.Settings ?? new AppSettings();
+                    SubscribeToSettings(Settings);
                     MigrateSettings(Settings);
+                    ApplyLanguage();
                 }
             }
             catch
@@ -115,6 +192,7 @@ public class ConfigService
             }
         };
         Settings = new AppSettings();
+        SubscribeToSettings(Settings);
         Save();
     }
 
@@ -186,6 +264,7 @@ public class ConfigService
     }
 
     public string GetIconsPath() => IconsPath;
+    public string GetConfigPath() => ConfigPath;
 }
 
 public class AppConfig

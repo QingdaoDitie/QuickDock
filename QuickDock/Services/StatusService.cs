@@ -9,6 +9,7 @@ namespace QuickDock.Services;
 
 public class StatusService : INotifyPropertyChanged, IDisposable
 {
+    private readonly ConfigService _configService;
     private readonly WeatherService _weatherService;
     private readonly SystemResourceService _resourceService;
     private readonly DispatcherTimer _weatherTimer;
@@ -77,23 +78,44 @@ public class StatusService : INotifyPropertyChanged, IDisposable
 
     public StatusService(ConfigService configService)
     {
+        _configService = configService;
         _dispatcher = System.Windows.Threading.Dispatcher.CurrentDispatcher;
         _weatherService = new WeatherService(configService);
         _resourceService = new SystemResourceService();
 
-        _weatherTimer = new DispatcherTimer
-        {
-            Interval = TimeSpan.FromMinutes(30)
-        };
+        _weatherTimer = new DispatcherTimer();
         _weatherTimer.Tick += async (s, e) => await RefreshWeatherAsync();
 
-        _resourceTimer = new DispatcherTimer
-        {
-            Interval = TimeSpan.FromSeconds(5)
-        };
+        _resourceTimer = new DispatcherTimer();
         _resourceTimer.Tick += (s, e) => RefreshResources();
+        _configService.SettingsChanged += OnSettingsChanged;
+        ApplyTimerIntervals();
 
         InitializeAsync();
+    }
+
+    private void OnSettingsChanged(string? propertyName)
+    {
+        switch (propertyName)
+        {
+            case nameof(AppSettings.Language):
+                UpdateWeatherUI("☀", _weatherData == null ? (Lang.CurrentLanguage == Language.Chinese ? "加载中..." : "Loading...") : WeatherText);
+                break;
+            case nameof(AppSettings.WeatherCity):
+                _weatherService.ClearCache();
+                _ = RefreshWeatherAsync();
+                break;
+            case nameof(AppSettings.WeatherRefreshIntervalMinutes):
+            case nameof(AppSettings.ResourceRefreshIntervalSeconds):
+                ApplyTimerIntervals();
+                break;
+        }
+    }
+
+    private void ApplyTimerIntervals()
+    {
+        _weatherTimer.Interval = TimeSpan.FromMinutes(Math.Max(1, _configService.Settings.WeatherRefreshIntervalMinutes));
+        _resourceTimer.Interval = TimeSpan.FromSeconds(Math.Max(1, _configService.Settings.ResourceRefreshIntervalSeconds));
     }
 
     private async void InitializeAsync()
@@ -202,6 +224,7 @@ public class StatusService : INotifyPropertyChanged, IDisposable
 
     public void Dispose()
     {
+        _configService.SettingsChanged -= OnSettingsChanged;
         _weatherTimer?.Stop();
         _resourceTimer?.Stop();
     }

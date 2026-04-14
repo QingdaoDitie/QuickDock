@@ -15,7 +15,9 @@
         AllowDrop="True"
         DragEnter="OnWindowDragEnter"
         DragOver="OnWindowDragOver"
-        Drop="OnWindowDrop">
+        Drop="OnWindowDrop"
+        PreviewMouseLeftButtonDown="OnWindowPreviewMouseLeftButtonDown"
+        PreviewMouseMove="OnWindowPreviewMouseMove">
     
     <Window.Resources>
     </Window.Resources>
@@ -29,9 +31,12 @@
                     MouseLeave="OnDockMouseLeave">
                 <StackPanel Orientation="Horizontal">
                     <local:StatusControl x:Name="StatusControl" Margin="0,0,10,0"/>
-                    <Border Width="1" Background="#444" Margin="0,4,10,4"/>
+                    <Border Width="1" Background="{StaticResource BorderBrush}" Margin="0,4,10,4"/>
                     <ItemsControl x:Name="DockItems" 
-                                  ItemsSource="{Binding Items}">
+                                  ItemsSource="{Binding Items}"
+                                  AllowDrop="True"
+                                  DragOver="OnDockItemsDragOver"
+                                  Drop="OnDockItemsDrop">
                         <ItemsControl.ItemsPanel>
                             <ItemsPanelTemplate>
                                 <StackPanel x:Name="ItemsPanel" Orientation="Horizontal"/>
@@ -49,18 +54,19 @@
                             ToolTip="工具集合"
                             Visibility="Collapsed">
                         <Grid>
-                            <Border HorizontalAlignment="Center"
-                                    VerticalAlignment="Center">
-                                <Rectangle Width="32" Height="32"
-                                           RadiusX="6" RadiusY="6"
-                                           Fill="#444"/>
-                            </Border>
-                            <TextBlock Text="T"
+                            <Image x:Name="ToolsButtonIcon"
+                                   Width="{Binding ToolIconSize}"
+                                   Height="{Binding ToolIconSize}"
+                                   Stretch="Uniform"
+                                   Visibility="Collapsed"/>
+                            <TextBlock x:Name="ToolsButtonFallbackText"
+                                       Text="T"
                                        FontSize="16"
                                        FontWeight="Bold"
-                                       Foreground="#ccc"
+                                       Foreground="{StaticResource TextBrush}"
                                        HorizontalAlignment="Center"
-                                       VerticalAlignment="Center"/>
+                                       VerticalAlignment="Center"
+                                       Visibility="Collapsed"/>
                         </Grid>
                     </Button>
                 </StackPanel>
@@ -69,24 +75,33 @@
             <Border x:Name="ToolsPanel"
                     Style="{StaticResource DockPanelStyle}"
                     Padding="10,8"
-                    Width="{Binding ActualWidth, ElementName=DockBorder}"
+                    HorizontalAlignment="Center"
                     Visibility="Collapsed"
                     Height="0"
+                    Width="{Binding ElementName=DockBorder, Path=ActualWidth}"
                     ClipToBounds="True">
-                <ItemsControl x:Name="ToolsItems" 
-                              ItemsSource="{Binding Tools}"
-                              HorizontalAlignment="Center">
-                    <ItemsControl.ItemsPanel>
-                        <ItemsPanelTemplate>
-                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center"/>
-                        </ItemsPanelTemplate>
-                    </ItemsControl.ItemsPanel>
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate>
-                            <local:DockItemControl x:Name="ToolItem"/>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
+                <ScrollViewer HorizontalScrollBarVisibility="Auto"
+                              VerticalScrollBarVisibility="Disabled"
+                              CanContentScroll="False"
+                              PanningMode="HorizontalOnly">
+                    <ItemsControl x:Name="ToolsItems" 
+                                  ItemsSource="{Binding Tools}"
+                                  HorizontalAlignment="Left"
+                                  AllowDrop="True"
+                                  DragOver="OnToolsItemsDragOver"
+                                  Drop="OnToolsItemsDrop">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel Orientation="Horizontal"/>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <local:DockItemControl x:Name="ToolItem"/>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
             </Border>
         </StackPanel>
     </Grid>

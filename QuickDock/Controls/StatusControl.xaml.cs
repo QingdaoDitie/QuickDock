@@ -1,6 +1,7 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using QuickDock.Services;
 
 namespace QuickDock.Controls;
 
@@ -22,6 +23,7 @@ public partial class StatusControl : System.Windows.Controls.UserControl
     public StatusControl()
     {
         InitializeComponent();
+        ApplyLanguage();
     }
 
     private static void OnStatusServiceChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
@@ -29,6 +31,7 @@ public partial class StatusControl : System.Windows.Controls.UserControl
         if (d is StatusControl control && e.NewValue is Services.StatusService service)
         {
             control.DataContext = service;
+            control.ApplyLanguage();
         }
     }
 
@@ -36,5 +39,13 @@ public partial class StatusControl : System.Windows.Controls.UserControl
     {
         e.Handled = true;
         StatusService?.RequestRefresh();
+    }
+
+    private void ApplyLanguage()
+    {
+        WeatherIconText.ToolTip = Lang.T("Status.RefreshWeather");
+        CpuLabelText.Text = "CPU";
+        MemLabelText.Text = "MEM";
+        GpuLabelText.Text = "GPU";
     }
 }

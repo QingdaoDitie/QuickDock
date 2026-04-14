@@ -56,6 +56,10 @@ public partial class ItemEditWindow : Window
     private void ApplyLanguage()
     {
         Title = Lang.T("Edit.Title");
+        HeaderTitleText.Text = Lang.T("Edit.Title");
+        HeaderSubtitleText.Text = Lang.CurrentLanguage == QuickDock.Services.Language.Chinese
+            ? "配置名称、启动方式、图标与附加参数。"
+            : "Configure the name, launch behavior, icon, and optional arguments.";
         NameLabel.Text = Lang.T("Edit.Name") + ":";
         TypeLabel.Text = Lang.T("Edit.Type") + ":";
         PathLabel.Text = Lang.T("Edit.Path") + ":";
@@ -67,6 +71,8 @@ public partial class ItemEditWindow : Window
         CancelButton.Content = Lang.T("Edit.Cancel");
         FetchIconBtn.Content = Lang.T("Edit.FetchIcon");
         UseIconBtn.Content = Lang.T("Edit.UseIcon");
+        BrowseButton.Content = Lang.T("Settings.ToolsBrowse");
+        BrowseIconButton.Content = Lang.T("Settings.ToolsBrowse");
     }
 
     private void OnTypeChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)

@@ -4,27 +4,27 @@
              Cursor="Hand">
     <UserControl.Resources>
         <Style x:Key="StatusTextStyle" TargetType="TextBlock">
-            <Setter Property="Foreground" Value="#e0e0e0"/>
+            <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
             <Setter Property="FontSize" Value="12"/>
             <Setter Property="VerticalAlignment" Value="Center"/>
             <Setter Property="FontFamily" Value="Segoe UI"/>
         </Style>
         <Style x:Key="ResourceLabelStyle" TargetType="TextBlock">
-            <Setter Property="Foreground" Value="#777"/>
+            <Setter Property="Foreground" Value="{StaticResource MutedTextBrush}"/>
             <Setter Property="FontSize" Value="10"/>
             <Setter Property="HorizontalAlignment" Value="Center"/>
             <Setter Property="FontFamily" Value="Segoe UI"/>
         </Style>
         <Style x:Key="ResourceValueStyle" TargetType="TextBlock">
-            <Setter Property="Foreground" Value="#bbb"/>
+            <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
             <Setter Property="FontSize" Value="11"/>
             <Setter Property="HorizontalAlignment" Value="Center"/>
             <Setter Property="FontFamily" Value="Consolas"/>
         </Style>
     </UserControl.Resources>
     
-    <Border Background="#1a1a1a" 
-            BorderBrush="#333" 
+    <Border Background="{StaticResource WindowPanelBrush}" 
+            BorderBrush="{StaticResource BorderBrush}" 
             BorderThickness="1"
             Padding="10,3,6,3"
             CornerRadius="4">
@@ -37,12 +37,13 @@
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
             
-            <TextBlock Grid.Column="0"
+            <TextBlock x:Name="WeatherIconText"
+                       Grid.Column="0"
                        Text="{Binding WeatherIcon}"
                        FontSize="14"
                        VerticalAlignment="Center"
                        Margin="0,0,4,0"
-                       Foreground="#e0e0e0"
+                       Foreground="{StaticResource TextBrush}"
                        MouseLeftButtonUp="OnRefreshClick"
                        ToolTip="点击刷新天气"/>
             
@@ -54,7 +55,7 @@
             
             <Border Grid.Column="2"
                     Width="1"
-                    Background="#444"
+                    Background="{StaticResource BorderBrush}"
                     Margin="0,2,6,2"/>
             
             <Grid Grid.Column="4"
@@ -69,13 +70,13 @@
                     <ColumnDefinition Width="32"/>
                 </Grid.ColumnDefinitions>
                 
-                <TextBlock Grid.Row="0" Grid.Column="0"
+                <TextBlock x:Name="CpuLabelText" Grid.Row="0" Grid.Column="0"
                            Text="CPU"
                            Style="{StaticResource ResourceLabelStyle}"/>
-                <TextBlock Grid.Row="0" Grid.Column="1"
+                <TextBlock x:Name="MemLabelText" Grid.Row="0" Grid.Column="1"
                            Text="MEM"
                            Style="{StaticResource ResourceLabelStyle}"/>
-                <TextBlock Grid.Row="0" Grid.Column="2"
+                <TextBlock x:Name="GpuLabelText" Grid.Row="0" Grid.Column="2"
                            Text="GPU"
                            Style="{StaticResource ResourceLabelStyle}"/>
                 

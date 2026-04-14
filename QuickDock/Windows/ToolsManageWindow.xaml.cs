@@ -1,10 +1,9 @@
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media;
 using QuickDock.Models;
 using QuickDock.Services;
 
-using WpfColor = System.Windows.Media.Color;
-using WpfColorConverter = System.Windows.Media.ColorConverter;
 using WpfBrush = System.Windows.Media.SolidColorBrush;
 using WpfThickness = System.Windows.Thickness;
 using WpfCornerRadius = System.Windows.CornerRadius;
@@ -30,13 +29,15 @@ public partial class ToolsManageWindow : Window
         SaveManageButton.Content = Lang.T("Tools.Save");
         CancelManageButton.Content = Lang.T("Settings.Cancel");
         Title = Lang.T("Settings.ToolsManage");
+        HeaderTitleText.Text = Lang.T("Settings.ToolsManage");
+        HeaderSubtitleText.Text = Lang.T("Tools.ManageSubtitle");
         
         LoadToolsList();
     }
 
-    private static WpfColor ParseColor(string hex)
+    private System.Windows.Media.Brush GetBrush(string key)
     {
-        return (WpfColor)WpfColorConverter.ConvertFromString(hex);
+        return (System.Windows.Media.Brush)FindResource(key);
     }
 
     private void LoadToolsList()
@@ -59,7 +60,7 @@ public partial class ToolsManageWindow : Window
             {
                 Text = Lang.T("Tools.NoExeFound"),
                 FontSize = 14,
-                Foreground = new WpfBrush(ParseColor("#999")),
+                Foreground = GetBrush("MutedTextBrush"),
                 HorizontalAlignment = WpfHorizontalAlignment.Center,
                 Margin = new WpfThickness(0, 40, 0, 0)
             };
@@ -71,10 +72,10 @@ public partial class ToolsManageWindow : Window
     {
         var border = new System.Windows.Controls.Border
         {
-            Background = new WpfBrush(ParseColor("#fff8e1")),
-            BorderBrush = new WpfBrush(ParseColor("#ffc107")),
+            Background = GetBrush("WarningBackgroundBrush"),
+            BorderBrush = GetBrush("WarningBrush"),
             BorderThickness = new WpfThickness(1),
-            CornerRadius = new WpfCornerRadius(4),
+            CornerRadius = new WpfCornerRadius(8),
             Padding = new WpfThickness(12, 8, 12, 8),
             Margin = new WpfThickness(0, 0, 0, 8)
         };
@@ -91,7 +92,7 @@ public partial class ToolsManageWindow : Window
             Text = pending.FolderName,
             FontSize = 14,
             FontWeight = WpfFontWeights.Medium,
-            Foreground = new WpfBrush(ParseColor("#333")),
+            Foreground = GetBrush("TextBrush"),
             VerticalAlignment = VerticalAlignment.Center
         };
         headerPanel.Children.Add(nameText);
@@ -100,7 +101,7 @@ public partial class ToolsManageWindow : Window
         {
             Text = Lang.T("Tools.Pending"),
             FontSize = 11,
-            Foreground = new WpfBrush(ParseColor("#ff9800")),
+            Foreground = GetBrush("WarningBrush"),
             Margin = new WpfThickness(10, 0, 0, 0),
             VerticalAlignment = VerticalAlignment.Center
         };
@@ -112,7 +113,7 @@ public partial class ToolsManageWindow : Window
         {
             Text = Lang.T("Tools.SelectMainExe") + ":",
             FontSize = 12,
-            Foreground = new WpfBrush(ParseColor("#666")),
+            Foreground = GetBrush("MutedTextBrush"),
             Margin = new WpfThickness(0, 6, 0, 4)
         };
         stack.Children.Add(hint);
@@ -129,7 +130,7 @@ public partial class ToolsManageWindow : Window
                 Content = System.IO.Path.GetFileName(candidate),
                 GroupName = pending.FolderName,
                 Tag = candidate,
-                Foreground = new WpfBrush(ParseColor("#333")),
+                Foreground = GetBrush("TextBrush"),
                 Margin = new WpfThickness(0, 2, 0, 2)
             };
             radioButtonPanel.Children.Add(radio);
@@ -140,8 +141,9 @@ public partial class ToolsManageWindow : Window
         var confirmButton = new System.Windows.Controls.Button
         {
             Content = Lang.T("Tools.Confirm"),
-            Background = new WpfBrush(ParseColor("#e8f5e9")),
-            Foreground = new WpfBrush(ParseColor("#2e7d32")),
+            Background = GetBrush("SuccessBackgroundBrush"),
+            Foreground = GetBrush("SuccessBrush"),
+            BorderBrush = System.Windows.Media.Brushes.Transparent,
             BorderThickness = new WpfThickness(0),
             Padding = new WpfThickness(12, 4, 12, 4),
             Cursor = WpfCursors.Hand,
@@ -159,10 +161,10 @@ public partial class ToolsManageWindow : Window
     {
         var border = new System.Windows.Controls.Border
         {
-            Background = new WpfBrush(WpfColor.FromArgb(255, 255, 255, 255)),
-            BorderBrush = new WpfBrush(ParseColor("#ddd")),
+            Background = GetBrush("SecondaryBackgroundBrush"),
+            BorderBrush = GetBrush("BorderBrush"),
             BorderThickness = new WpfThickness(1),
-            CornerRadius = new WpfCornerRadius(4),
+            CornerRadius = new WpfCornerRadius(8),
             Padding = new WpfThickness(12, 8, 12, 8),
             Margin = new WpfThickness(0, 0, 0, 8),
             Tag = tool
@@ -180,7 +182,7 @@ public partial class ToolsManageWindow : Window
             Text = tool.DisplayName,
             FontSize = 14,
             FontWeight = WpfFontWeights.Medium,
-            Foreground = new WpfBrush(ParseColor("#333")),
+            Foreground = GetBrush("TextBrush"),
             VerticalAlignment = VerticalAlignment.Center
         };
         headerPanel.Children.Add(nameText);
@@ -190,8 +192,8 @@ public partial class ToolsManageWindow : Window
             Text = tool.IsConfirmed ? Lang.T("Tools.Confirm") : Lang.T("Tools.Pending"),
             FontSize = 11,
             Foreground = tool.IsConfirmed
-                ? new WpfBrush(ParseColor("#4caf50"))
-                : new WpfBrush(ParseColor("#ff9800")),
+                ? GetBrush("SuccessBrush")
+                : GetBrush("WarningBrush"),
             Margin = new WpfThickness(10, 0, 0, 0),
             VerticalAlignment = VerticalAlignment.Center
         };
@@ -200,8 +202,9 @@ public partial class ToolsManageWindow : Window
         var removeButton = new System.Windows.Controls.Button
         {
             Content = Lang.T("Tools.Remove"),
-            Background = new WpfBrush(ParseColor("#ffebee")),
-            Foreground = new WpfBrush(ParseColor("#c62828")),
+            Background = GetBrush("DangerBackgroundBrush"),
+            Foreground = GetBrush("DangerBrush"),
+            BorderBrush = System.Windows.Media.Brushes.Transparent,
             BorderThickness = new WpfThickness(0),
             Padding = new WpfThickness(8, 3, 8, 3),
             Cursor = WpfCursors.Hand,
@@ -212,13 +215,45 @@ public partial class ToolsManageWindow : Window
         removeButton.Click += OnRemoveTool;
         headerPanel.Children.Add(removeButton);
 
+        var upButton = new System.Windows.Controls.Button
+        {
+            Content = Lang.T("Settings.Up"),
+            Background = GetBrush("WindowPanelBrush"),
+            Foreground = GetBrush("TextBrush"),
+            BorderBrush = System.Windows.Media.Brushes.Transparent,
+            BorderThickness = new WpfThickness(0),
+            Padding = new WpfThickness(8, 3, 8, 3),
+            Cursor = WpfCursors.Hand,
+            Margin = new WpfThickness(8, 0, 0, 0),
+            VerticalAlignment = VerticalAlignment.Center,
+            Tag = tool
+        };
+        upButton.Click += OnMoveToolUp;
+        headerPanel.Children.Add(upButton);
+
+        var downButton = new System.Windows.Controls.Button
+        {
+            Content = Lang.T("Settings.Down"),
+            Background = GetBrush("WindowPanelBrush"),
+            Foreground = GetBrush("TextBrush"),
+            BorderBrush = System.Windows.Media.Brushes.Transparent,
+            BorderThickness = new WpfThickness(0),
+            Padding = new WpfThickness(8, 3, 8, 3),
+            Cursor = WpfCursors.Hand,
+            Margin = new WpfThickness(8, 0, 0, 0),
+            VerticalAlignment = VerticalAlignment.Center,
+            Tag = tool
+        };
+        downButton.Click += OnMoveToolDown;
+        headerPanel.Children.Add(downButton);
+
         stack.Children.Add(headerPanel);
 
         var pathText = new TextBlock
         {
             Text = tool.ExePath,
             FontSize = 11,
-            Foreground = new WpfBrush(ParseColor("#999")),
+            Foreground = GetBrush("MutedTextBrush"),
             Margin = new WpfThickness(0, 4, 0, 0)
         };
         stack.Children.Add(pathText);
@@ -255,6 +290,7 @@ public partial class ToolsManageWindow : Window
         };
 
         _configService.Settings.ToolsItems.Add(toolItem);
+        NormalizeToolOrder();
         _pendingFolders.Remove(pending);
         LoadToolsList();
     }
@@ -264,7 +300,52 @@ public partial class ToolsManageWindow : Window
         if (sender is System.Windows.Controls.Button button && button.Tag is ToolItem tool)
         {
             _configService.Settings.ToolsItems.Remove(tool);
+            NormalizeToolOrder();
             LoadToolsList();
+        }
+    }
+
+    private void OnMoveToolUp(object sender, RoutedEventArgs e)
+    {
+        MoveTool(sender, -1);
+    }
+
+    private void OnMoveToolDown(object sender, RoutedEventArgs e)
+    {
+        MoveTool(sender, 1);
+    }
+
+    private void MoveTool(object sender, int offset)
+    {
+        if (sender is not System.Windows.Controls.Button button || button.Tag is not ToolItem tool)
+        {
+            return;
+        }
+
+        var tools = _configService.Settings.ToolsItems;
+        var index = tools.IndexOf(tool);
+        if (index < 0)
+        {
+            return;
+        }
+
+        var targetIndex = index + offset;
+        if (targetIndex < 0 || targetIndex >= tools.Count)
+        {
+            return;
+        }
+
+        tools.RemoveAt(index);
+        tools.Insert(targetIndex, tool);
+        NormalizeToolOrder();
+        LoadToolsList();
+    }
+
+    private void NormalizeToolOrder()
+    {
+        for (int i = 0; i < _configService.Settings.ToolsItems.Count; i++)
+        {
+            _configService.Settings.ToolsItems[i].Order = i;
         }
     }
 

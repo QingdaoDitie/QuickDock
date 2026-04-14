@@ -2,6 +2,9 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.ComponentModel;
+using System.Diagnostics;
+using System.Reflection;
 using QuickDock.Models;
 using QuickDock.Services;
 
@@ -17,8 +20,12 @@ public partial class SettingsWindow : Window
     private readonly ToolsScanService _scanService;
     private List<DockItem> _items;
     private List<PendingToolFolder> _pendingFolders = new();
+    private readonly AppSettings _settingsSnapshot;
     private bool _initialized;
     private bool _autoStartEnabled;
+    private readonly bool _autoStartSnapshot;
+    private bool _isSaving;
+    private bool _isRefreshingLanguageChoices;
 
     private System.Windows.Controls.Button? _activeNav;
     private readonly Dictionary<string, StackPanel> _pages = new();
@@ -29,6 +36,7 @@ public partial class SettingsWindow : Window
         _configService = configService;
         _autoStartService = autoStartService;
         _scanService = new ToolsScanService();
+        _settingsSnapshot = _configService.Settings.Clone();
         _items = new List<DockItem>(_configService.Items);
         
         InitializeComponent();
@@ -41,17 +49,21 @@ public partial class SettingsWindow : Window
         _pages["NavDockItems"] = PageDockItems;
         _pages["NavHotZone"] = PageHotZone;
         _pages["NavTools"] = PageTools;
+        _pages["NavAbout"] = PageAbout;
         _navButtons["NavBasic"] = NavBasic;
         _navButtons["NavAppearance"] = NavAppearance;
         _navButtons["NavDockItems"] = NavDockItems;
         _navButtons["NavHotZone"] = NavHotZone;
         _navButtons["NavTools"] = NavTools;
+        _navButtons["NavAbout"] = NavAbout;
         
         _autoStartEnabled = _autoStartService.IsEnabled();
+        _autoStartSnapshot = _autoStartEnabled;
+        _configService.Settings.AutoStart = _autoStartEnabled;
         UpdateAutoStartToggle();
         
-        LanguageComboBox.Items.Add("中文");
-        LanguageComboBox.Items.Add("English");
+        LanguageComboBox.Items.Add(Lang.T("Settings.Language.zh"));
+        LanguageComboBox.Items.Add(Lang.T("Settings.Language.en"));
         
         var opacity = _configService.Settings.DockOpacity;
         OpacitySlider.Value = opacity;
@@ -73,9 +85,34 @@ public partial class SettingsWindow : Window
         var iconSpacing = _configService.Settings.IconSpacing;
         IconSpacingSlider.Value = iconSpacing;
         IconSpacingValue.Text = $"{(int)iconSpacing}px";
+
+        var toolIconSize = _configService.Settings.ToolIconSize;
+        ToolIconSizeSlider.Value = toolIconSize;
+        ToolIconSizeValue.Text = $"{(int)toolIconSize}px";
+
+        DockShowAnimationSlider.Value = _configService.Settings.DockShowAnimationDuration;
+        DockShowAnimationValue.Text = $"{_configService.Settings.DockShowAnimationDuration}ms";
+
+        DockHideAnimationSlider.Value = _configService.Settings.DockHideAnimationDuration;
+        DockHideAnimationValue.Text = $"{_configService.Settings.DockHideAnimationDuration}ms";
+
+        ToolsExpandAnimationSlider.Value = _configService.Settings.ToolsExpandAnimationDuration;
+        ToolsExpandAnimationValue.Text = $"{_configService.Settings.ToolsExpandAnimationDuration}ms";
+
+        ToolsCollapseAnimationSlider.Value = _configService.Settings.ToolsCollapseAnimationDuration;
+        ToolsCollapseAnimationValue.Text = $"{_configService.Settings.ToolsCollapseAnimationDuration}ms";
+
+        StartupPreviewSlider.Value = _configService.Settings.StartupPreviewDuration;
+        StartupPreviewValue.Text = $"{_configService.Settings.StartupPreviewDuration}ms";
         
         ShowStatusBarCheckBox.IsChecked = _configService.Settings.ShowStatusBar;
         WeatherCityTextBox.Text = _configService.Settings.WeatherCity;
+
+        WeatherRefreshSlider.Value = _configService.Settings.WeatherRefreshIntervalMinutes;
+        WeatherRefreshValue.Text = $"{_configService.Settings.WeatherRefreshIntervalMinutes}m";
+
+        ResourceRefreshSlider.Value = _configService.Settings.ResourceRefreshIntervalSeconds;
+        ResourceRefreshValue.Text = $"{_configService.Settings.ResourceRefreshIntervalSeconds}s";
         
         var triggerDelay = _configService.Settings.HotZoneTriggerDelay;
         TriggerDelaySlider.Value = triggerDelay;
@@ -84,10 +121,15 @@ public partial class SettingsWindow : Window
         var edgeSize = _configService.Settings.HotZoneEdgeSize;
         EdgeSizeSlider.Value = edgeSize;
         EdgeSizeValue.Text = $"{(int)edgeSize}px";
+
+        AutoHideToleranceSlider.Value = _configService.Settings.AutoHideTolerance;
+        AutoHideToleranceValue.Text = $"{_configService.Settings.AutoHideTolerance}px";
         
         ToolsEnabledCheckBox.IsChecked = _configService.Settings.ToolsEnabled;
         ToolsRootPathTextBox.Text = _configService.Settings.ToolsRootPath;
         UpdateToolsPendingWarning();
+        AboutVersionValue.Text = GetAppVersion();
+        AboutConfigPathValue.Text = _configService.GetConfigPath();
         
         _initialized = true;
         ApplyLanguage();
@@ -113,48 +155,98 @@ public partial class SettingsWindow : Window
 
     private void ApplyLanguage()
     {
-        var lang = _configService.Settings.Language;
-        
-        NavBasic.Content = lang == "zh" ? "基础设置" : "Basic";
-        NavAppearance.Content = lang == "zh" ? "外观设置" : "Appearance";
-        NavDockItems.Content = lang == "zh" ? "快捷方式" : "Dock Items";
-        NavHotZone.Content = lang == "zh" ? "热区设置" : "Hot Zone";
-        NavTools.Content = lang == "zh" ? "工具集合" : "Tools";
+        Title = Lang.T("Settings.Title");
+        NavBasic.Content = Lang.T("Settings.Nav.Basic");
+        NavAppearance.Content = Lang.T("Settings.Nav.Appearance");
+        NavDockItems.Content = Lang.T("Settings.Nav.DockItems");
+        NavHotZone.Content = Lang.T("Settings.Nav.HotZone");
+        NavTools.Content = Lang.T("Settings.Nav.Tools");
+        NavAbout.Content = Lang.T("Settings.Nav.About");
         
         BasicTitle.Text = NavBasic.Content as string;
+        BasicSubtitle.Text = Lang.T("Settings.BasicSubtitle");
         AppearanceTitle.Text = NavAppearance.Content as string;
+        AppearanceSubtitle.Text = Lang.T("Settings.AppearanceSubtitle");
         DockItemsLabel.Text = NavDockItems.Content as string;
+        DockItemsSubtitle.Text = Lang.T("Settings.DockItemsSubtitle");
         HotZoneTitle.Text = NavHotZone.Content as string;
+        HotZoneSubtitle.Text = Lang.T("Settings.HotZoneSubtitle");
         ToolsSectionLabel.Text = NavTools.Content as string;
+        ToolsSubtitle.Text = Lang.T("Settings.ToolsSubtitle");
+        AboutTitle.Text = NavAbout.Content as string;
+        AboutSubtitle.Text = Lang.T("Settings.AboutSubtitle");
         
-        LanguageLabel.Text = lang == "zh" ? "语言" : "Language";
-        AutoStartTitleText.Text = lang == "zh" ? "开机自启" : "Auto Start";
-        AutoStartDescText.Text = lang == "zh" ? "启动 Windows 时自动运行" : "Launch on Windows startup";
-        ShowStatusBarLabel.Text = lang == "zh" ? "状态栏" : "Status Bar";
-        WeatherCityLabel.Text = lang == "zh" ? "天气城市" : "Weather City";
+        LanguageLabel.Text = Lang.T("Settings.Language");
+        AutoStartTitleText.Text = Lang.T("Settings.AutoStartTitle");
+        AutoStartDescText.Text = Lang.T("Settings.AutoStartDesc");
+        ShowStatusBarLabel.Text = Lang.T("Settings.StatusBar");
+        WeatherCityLabel.Text = Lang.T("Settings.WeatherCity");
+        WeatherRefreshLabel.Text = Lang.T("Settings.WeatherRefresh");
+        ResourceRefreshLabel.Text = Lang.T("Settings.ResourceRefresh");
         
-        BackgroundColorLabel.Text = lang == "zh" ? "背景色" : "Background";
-        OpacityLabel.Text = lang == "zh" ? "透明度" : "Opacity";
-        ScaleLabel.Text = lang == "zh" ? "缩放" : "Scale";
-        IconSizeLabel.Text = lang == "zh" ? "图标大小" : "Icon Size";
-        IconSpacingLabel.Text = lang == "zh" ? "图标间距" : "Spacing";
+        BackgroundColorLabel.Text = Lang.T("Settings.Background");
+        ColorPresetsLabel.Text = Lang.T("Settings.ColorPresets");
+        PickBackgroundColorButton.Content = Lang.T("Settings.PickColor");
+        OpacityLabel.Text = Lang.T("Settings.Opacity");
+        ScaleLabel.Text = Lang.T("Settings.Scale");
+        IconSizeLabel.Text = Lang.T("Settings.IconSize");
+        IconSpacingLabel.Text = Lang.T("Settings.Spacing");
+        DockShowAnimationLabel.Text = Lang.T("Settings.DockShowAnimation");
+        DockHideAnimationLabel.Text = Lang.T("Settings.DockHideAnimation");
+        ToolsExpandAnimationLabel.Text = Lang.T("Settings.ToolsExpandAnimation");
+        ToolsCollapseAnimationLabel.Text = Lang.T("Settings.ToolsCollapseAnimation");
+        StartupPreviewLabel.Text = Lang.T("Settings.StartupPreview");
+        ResetAppearanceButton.Content = Lang.T("Settings.ResetAppearance");
         
-        TriggerDelayLabel.Text = lang == "zh" ? "触发延迟" : "Trigger Delay";
-        EdgeSizeLabel.Text = lang == "zh" ? "边缘范围" : "Edge Size";
+        TriggerDelayLabel.Text = Lang.T("Settings.TriggerDelay");
+        EdgeSizeLabel.Text = Lang.T("Settings.EdgeSize");
+        AutoHideToleranceLabel.Text = Lang.T("Settings.AutoHideTolerance");
         
-        ToolsEnabledLabel.Text = lang == "zh" ? "启用" : "Enabled";
-        ToolsRootPathLabel.Text = lang == "zh" ? "路径" : "Path";
-        ToolsBrowseButton.Content = lang == "zh" ? "..." : "...";
-        ToolsScanButton.Content = lang == "zh" ? "重新扫描" : "Rescan";
-        ToolsManageButton.Content = lang == "zh" ? "管理工具" : "Manage";
-        
-        SaveButton.Content = lang == "zh" ? "保存" : "Save";
-        CancelButton.Content = lang == "zh" ? "取消" : "Cancel";
+        ToolsEnabledLabel.Text = Lang.T("Settings.Enabled");
+        ToolIconSizeLabel.Text = Lang.T("Settings.ToolIcon");
+        ToolsRootPathLabel.Text = Lang.T("Settings.Path");
+        ToolsBrowseButton.Content = Lang.T("Settings.ToolsBrowse");
+        ToolsScanButton.Content = Lang.T("Settings.ToolsScan");
+        ToolsManageButton.Content = Lang.T("Settings.ToolsManage");
+
+        AddButton.Content = Lang.T("Settings.Add");
+        EditButton.Content = Lang.T("Settings.Edit");
+        DeleteButton.Content = Lang.T("Settings.Delete");
+        UpButton.Content = Lang.T("Settings.Up");
+        DownButton.Content = Lang.T("Settings.Down");
+        SaveButton.Content = Lang.T("Settings.Save");
+        CancelButton.Content = Lang.T("Settings.Cancel");
+        AboutVersionLabel.Text = Lang.T("Settings.AboutVersion");
+        AboutConfigPathLabel.Text = Lang.T("Settings.AboutConfigPath");
+        AboutThemeLabel.Text = Lang.T("Settings.AboutTheme");
+        AboutThemeValue.Text = Lang.T("Settings.AboutThemeValue");
+        AboutReloadLabel.Text = Lang.T("Settings.AboutReload");
+        AboutReloadValue.Text = Lang.T("Settings.AboutReloadValue");
+        OpenConfigFolderButton.Content = Lang.T("Settings.AboutOpenConfig");
+        RefreshLanguageChoices();
+        UpdateToolsPendingWarning();
+    }
+
+    private void RefreshLanguageChoices()
+    {
+        _isRefreshingLanguageChoices = true;
+        try
+        {
+            var selectedIndex = LanguageComboBox.SelectedIndex < 0 ? 0 : LanguageComboBox.SelectedIndex;
+            LanguageComboBox.Items.Clear();
+            LanguageComboBox.Items.Add(Lang.T("Settings.Language.zh"));
+            LanguageComboBox.Items.Add(Lang.T("Settings.Language.en"));
+            LanguageComboBox.SelectedIndex = selectedIndex;
+        }
+        finally
+        {
+            _isRefreshingLanguageChoices = false;
+        }
     }
 
     private void OnLanguageChanged(object sender, SelectionChangedEventArgs e)
     {
-        if (!_initialized) return;
+        if (!_initialized || _isRefreshingLanguageChoices) return;
         _configService.Settings.Language = LanguageComboBox.SelectedIndex == 0 ? "zh" : "en";
         ApplyLanguage();
     }
@@ -162,6 +254,7 @@ public partial class SettingsWindow : Window
     private void OnAutoStartClick(object sender, MouseButtonEventArgs e)
     {
         _autoStartEnabled = !_autoStartEnabled;
+        _configService.Settings.AutoStart = _autoStartEnabled;
         if (_autoStartEnabled)
             _autoStartService.Enable();
         else
@@ -173,13 +266,13 @@ public partial class SettingsWindow : Window
     {
         if (_autoStartEnabled)
         {
-            AutoStartToggle.Background = new SolidColorBrush((WpfColor)WpfColorConverter.ConvertFromString("#4caf50")!);
+            AutoStartToggle.Background = (System.Windows.Media.Brush)FindResource("ToggleOnBrush");
             AutoStartToggleKnob.SetValue(FrameworkElement.HorizontalAlignmentProperty, System.Windows.HorizontalAlignment.Right);
             AutoStartToggleKnob.Margin = new Thickness(0, 0, 2, 0);
         }
         else
         {
-            AutoStartToggle.Background = new SolidColorBrush(Colors.LightGray);
+            AutoStartToggle.Background = (System.Windows.Media.Brush)FindResource("ToggleOffBrush");
             AutoStartToggleKnob.SetValue(FrameworkElement.HorizontalAlignmentProperty, System.Windows.HorizontalAlignment.Left);
             AutoStartToggleKnob.Margin = new Thickness(2, 0, 0, 0);
         }
@@ -204,6 +297,57 @@ public partial class SettingsWindow : Window
         {
             BackgroundColorPreview.Background = new SolidColorBrush(Colors.Transparent);
         }
+    }
+
+    private void OnBackgroundPresetClick(object sender, RoutedEventArgs e)
+    {
+        if (sender is not System.Windows.Controls.Button button || button.Tag is not string colorText)
+        {
+            return;
+        }
+
+        BackgroundColorTextBox.Text = colorText;
+    }
+
+    private void OnPickBackgroundColorClick(object sender, RoutedEventArgs e)
+    {
+        var dialog = new System.Windows.Forms.ColorDialog
+        {
+            FullOpen = true,
+            AllowFullOpen = true
+        };
+
+        try
+        {
+            var currentColor = (WpfColor)WpfColorConverter.ConvertFromString(BackgroundColorTextBox.Text)!;
+            dialog.Color = System.Drawing.Color.FromArgb(currentColor.A, currentColor.R, currentColor.G, currentColor.B);
+        }
+        catch
+        {
+            dialog.Color = System.Drawing.Color.FromArgb(30, 30, 30);
+        }
+
+        if (dialog.ShowDialog() != System.Windows.Forms.DialogResult.OK)
+        {
+            return;
+        }
+
+        BackgroundColorTextBox.Text = $"#{dialog.Color.R:X2}{dialog.Color.G:X2}{dialog.Color.B:X2}";
+    }
+
+    private void OnResetAppearanceClick(object sender, RoutedEventArgs e)
+    {
+        BackgroundColorTextBox.Text = "#1e1e1e";
+        OpacitySlider.Value = 0.9;
+        ScaleSlider.Value = 1.0;
+        IconSizeSlider.Value = 32;
+        IconSpacingSlider.Value = 5;
+        ToolIconSizeSlider.Value = 24;
+        DockShowAnimationSlider.Value = 220;
+        DockHideAnimationSlider.Value = 180;
+        ToolsExpandAnimationSlider.Value = 140;
+        ToolsCollapseAnimationSlider.Value = 110;
+        StartupPreviewSlider.Value = 1500;
     }
 
     private void OnOpacityChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
@@ -234,6 +378,48 @@ public partial class SettingsWindow : Window
         IconSpacingValue.Text = $"{(int)IconSpacingSlider.Value}px";
     }
 
+    private void OnToolIconSizeChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+    {
+        if (!_initialized || ToolIconSizeValue == null) return;
+        _configService.Settings.ToolIconSize = ToolIconSizeSlider.Value;
+        ToolIconSizeValue.Text = $"{(int)ToolIconSizeSlider.Value}px";
+    }
+
+    private void OnDockShowAnimationChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+    {
+        if (!_initialized || DockShowAnimationValue == null) return;
+        _configService.Settings.DockShowAnimationDuration = (int)Math.Round(DockShowAnimationSlider.Value);
+        DockShowAnimationValue.Text = $"{_configService.Settings.DockShowAnimationDuration}ms";
+    }
+
+    private void OnDockHideAnimationChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+    {
+        if (!_initialized || DockHideAnimationValue == null) return;
+        _configService.Settings.DockHideAnimationDuration = (int)Math.Round(DockHideAnimationSlider.Value);
+        DockHideAnimationValue.Text = $"{_configService.Settings.DockHideAnimationDuration}ms";
+    }
+
+    private void OnToolsExpandAnimationChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+    {
+        if (!_initialized || ToolsExpandAnimationValue == null) return;
+        _configService.Settings.ToolsExpandAnimationDuration = (int)Math.Round(ToolsExpandAnimationSlider.Value);
+        ToolsExpandAnimationValue.Text = $"{_configService.Settings.ToolsExpandAnimationDuration}ms";
+    }
+
+    private void OnToolsCollapseAnimationChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+    {
+        if (!_initialized || ToolsCollapseAnimationValue == null) return;
+        _configService.Settings.ToolsCollapseAnimationDuration = (int)Math.Round(ToolsCollapseAnimationSlider.Value);
+        ToolsCollapseAnimationValue.Text = $"{_configService.Settings.ToolsCollapseAnimationDuration}ms";
+    }
+
+    private void OnStartupPreviewChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+    {
+        if (!_initialized || StartupPreviewValue == null) return;
+        _configService.Settings.StartupPreviewDuration = (int)Math.Round(StartupPreviewSlider.Value);
+        StartupPreviewValue.Text = $"{_configService.Settings.StartupPreviewDuration}ms";
+    }
+
     private void OnTriggerDelayChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
     {
         if (!_initialized || TriggerDelayValue == null) return;
@@ -248,6 +434,13 @@ public partial class SettingsWindow : Window
         EdgeSizeValue.Text = $"{(int)EdgeSizeSlider.Value}px";
     }
 
+    private void OnAutoHideToleranceChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+    {
+        if (!_initialized || AutoHideToleranceValue == null) return;
+        _configService.Settings.AutoHideTolerance = (int)Math.Round(AutoHideToleranceSlider.Value);
+        AutoHideToleranceValue.Text = $"{_configService.Settings.AutoHideTolerance}px";
+    }
+
     private void OnShowStatusBarChanged(object sender, RoutedEventArgs e)
     {
         if (!_initialized) return;
@@ -258,6 +451,20 @@ public partial class SettingsWindow : Window
     {
         if (!_initialized) return;
         _configService.Settings.WeatherCity = WeatherCityTextBox.Text;
+    }
+
+    private void OnWeatherRefreshChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+    {
+        if (!_initialized || WeatherRefreshValue == null) return;
+        _configService.Settings.WeatherRefreshIntervalMinutes = (int)Math.Round(WeatherRefreshSlider.Value);
+        WeatherRefreshValue.Text = $"{_configService.Settings.WeatherRefreshIntervalMinutes}m";
+    }
+
+    private void OnResourceRefreshChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+    {
+        if (!_initialized || ResourceRefreshValue == null) return;
+        _configService.Settings.ResourceRefreshIntervalSeconds = (int)Math.Round(ResourceRefreshSlider.Value);
+        ResourceRefreshValue.Text = $"{_configService.Settings.ResourceRefreshIntervalSeconds}s";
     }
 
     private void OnItemSelected(object sender, SelectionChangedEventArgs e)
@@ -339,6 +546,7 @@ public partial class SettingsWindow : Window
         {
             _configService.Items.Add(item);
         }
+        _isSaving = true;
         _configService.Save();
         DialogResult = true;
         Close();
@@ -348,6 +556,23 @@ public partial class SettingsWindow : Window
     {
         DialogResult = false;
         Close();
+    }
+
+    protected override void OnClosing(CancelEventArgs e)
+    {
+        if (!_isSaving)
+        {
+            _configService.Settings.CopyFrom(_settingsSnapshot);
+            if (_autoStartSnapshot != _autoStartEnabled)
+            {
+                if (_autoStartSnapshot)
+                    _autoStartService.Enable();
+                else
+                    _autoStartService.Disable();
+            }
+        }
+
+        base.OnClosing(e);
     }
 
     private void OnToolsEnabledChanged(object sender, RoutedEventArgs e)
@@ -360,7 +585,7 @@ public partial class SettingsWindow : Window
     {
         var dialog = new System.Windows.Forms.FolderBrowserDialog
         {
-            Description = _configService.Settings.Language == "zh" ? "选择工具文件夹" : "Select Tools Folder",
+            Description = Lang.CurrentLanguage == QuickDock.Services.Language.Chinese ? "选择工具文件夹" : "Select Tools Folder",
             UseDescriptionForTitle = true,
             ShowNewFolderButton = false
         };
@@ -384,7 +609,7 @@ public partial class SettingsWindow : Window
         if (string.IsNullOrWhiteSpace(rootPath) || !System.IO.Directory.Exists(rootPath))
         {
             System.Windows.MessageBox.Show(
-                _configService.Settings.Language == "zh" ? "路径不存在" : "Path does not exist",
+                Lang.T("Tools.PathNotExist"),
                 Title, MessageBoxButton.OK, MessageBoxImage.Warning);
             return;
         }
@@ -414,14 +639,10 @@ public partial class SettingsWindow : Window
         UpdateToolsPendingWarning();
 
         var pendingCount = result.PendingFolders.Count;
-        var msg = _configService.Settings.Language == "zh"
-            ? $"扫描完成，共找到 {mergedItems.Count} 个工具"
-            : $"Scan complete, found {mergedItems.Count} tool(s)";
+        var msg = string.Format(Lang.T("Tools.ScanComplete"), mergedItems.Count);
         if (pendingCount > 0)
         {
-            msg += _configService.Settings.Language == "zh"
-                ? $"，其中 {pendingCount} 个需要确认"
-                : $", {pendingCount} need confirmation";
+            msg += string.Format(Lang.T("Tools.ScanHasPending"), pendingCount);
         }
 
         System.Windows.MessageBox.Show(msg, Title, MessageBoxButton.OK, MessageBoxImage.Information);
@@ -443,14 +664,31 @@ public partial class SettingsWindow : Window
         if (pendingCount > 0)
         {
             ToolsPendingWarning.Visibility = Visibility.Visible;
-            var lang = _configService.Settings.Language;
-            ToolsPendingWarningText.Text = lang == "zh"
-                ? $"有 {pendingCount} 个工具需要确认主程序"
-                : $"{pendingCount} tool(s) need main program confirmation";
+            ToolsPendingWarningText.Text = string.Format(Lang.T("Settings.ToolsPendingWarning"), pendingCount);
         }
         else
         {
             ToolsPendingWarning.Visibility = Visibility.Collapsed;
         }
+    }
+
+    private void OnOpenConfigFolderClick(object sender, RoutedEventArgs e)
+    {
+        var configDirectory = System.IO.Path.GetDirectoryName(_configService.GetConfigPath());
+        if (string.IsNullOrWhiteSpace(configDirectory))
+        {
+            return;
+        }
+
+        Process.Start(new ProcessStartInfo
+        {
+            FileName = configDirectory,
+            UseShellExecute = true
+        });
+    }
+
+    private static string GetAppVersion()
+    {
+        return Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "1.0.0";
     }
 }

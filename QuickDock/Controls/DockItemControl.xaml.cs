@@ -21,14 +21,6 @@ public partial class DockItemControl : System.Windows.Controls.UserControl
 
     private void OnLoaded(object sender, RoutedEventArgs e)
     {
-        var configService = SharedConfigService;
-        if (configService != null)
-        {
-            var iconSize = configService.Settings.IconSize;
-            IconRect.Width = iconSize;
-            IconRect.Height = iconSize;
-        }
-        
         if (DataContext is DockItem item)
         {
             LoadIcon(item);
@@ -37,6 +29,8 @@ public partial class DockItemControl : System.Windows.Controls.UserControl
         {
             LoadToolIcon(tool);
         }
+
+        ApplyVisualSize();
     }
 
     private void LoadToolIcon(ToolItem tool)
@@ -292,18 +286,48 @@ public partial class DockItemControl : System.Windows.Controls.UserControl
         }
     }
 
-    private void OnSizeChanged(object sender, SizeChangedEventArgs e)
+    private double GetConfiguredIconSize()
     {
         var configService = SharedConfigService;
-        if (configService != null)
+        if (configService == null)
         {
-            var iconSize = configService.Settings.IconSize;
-            var padding = 18.0;
-            Width = iconSize + padding;
-            Height = iconSize + padding;
-            IconRect.Width = iconSize;
-            IconRect.Height = iconSize;
+            return 32;
         }
+
+        return DataContext is ToolItem
+            ? configService.Settings.ToolIconSize
+            : configService.Settings.IconSize;
+    }
+
+    private void OnToolTipOpening(object sender, ToolTipEventArgs e)
+    {
+        if (sender is not System.Windows.Controls.Button button) return;
+
+        button.ToolTip = DataContext switch
+        {
+            DockItem item => item.Name,
+            ToolItem tool => tool.DisplayName,
+            _ => null
+        };
+    }
+
+    private void OnSizeChanged(object sender, SizeChangedEventArgs e)
+    {
+        ApplyVisualSize();
+    }
+
+    private void ApplyVisualSize()
+    {
+        var iconSize = GetConfiguredIconSize();
+        var padding = 18.0;
+        Width = iconSize + padding;
+        Height = iconSize + padding;
+        ItemButton.Width = Width;
+        ItemButton.Height = Height;
+        IconRect.Width = iconSize;
+        IconRect.Height = iconSize;
+        IconRect.RadiusX = Math.Max(4, iconSize / 5);
+        IconRect.RadiusY = Math.Max(4, iconSize / 5);
     }
 
     [System.Runtime.InteropServices.DllImport("gdi32.dll")]
