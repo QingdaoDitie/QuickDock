@@ -31,7 +31,7 @@
                     MouseLeave="OnDockMouseLeave">
                 <StackPanel Orientation="Horizontal">
                     <local:StatusControl x:Name="StatusControl" Margin="0,0,10,0"/>
-                    <Border Width="1" Background="{StaticResource BorderBrush}" Margin="0,4,10,4"/>
+                    <Border x:Name="StatusBarSeparator" Width="1" Background="{StaticResource BorderBrush}" Margin="0,4,10,4"/>
                     <ItemsControl x:Name="DockItems" 
                                   ItemsSource="{Binding Items}"
                                   AllowDrop="True"
@@ -78,9 +78,10 @@
                     HorizontalAlignment="Center"
                     Visibility="Collapsed"
                     Height="0"
-                    Width="{Binding ElementName=DockBorder, Path=ActualWidth}"
+                    MaxWidth="{Binding ElementName=DockBorder, Path=ActualWidth}"
                     ClipToBounds="True">
-                <ScrollViewer HorizontalScrollBarVisibility="Auto"
+                <ScrollViewer HorizontalAlignment="Center"
+                              HorizontalScrollBarVisibility="Auto"
                               VerticalScrollBarVisibility="Disabled"
                               CanContentScroll="False"
                               PanningMode="HorizontalOnly">

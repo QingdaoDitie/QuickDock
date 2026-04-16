@@ -28,15 +28,80 @@
                                Margin="0,4,0,0"/>
                 </StackPanel>
 
-                <Border Grid.Row="1"
-                        Style="{StaticResource DialogCardStyle}"
-                        Padding="0">
-                    <ScrollViewer VerticalScrollBarVisibility="Auto"
-                                  HorizontalScrollBarVisibility="Disabled"
-                                  Padding="14">
-                        <StackPanel x:Name="ToolsListPanel"/>
-                    </ScrollViewer>
-                </Border>
+                <Grid Grid.Row="1">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <StackPanel x:Name="PendingPanel" Grid.Row="0" Margin="0,0,0,10" Visibility="Collapsed"/>
+
+                    <Border Grid.Row="1" Background="{StaticResource WindowCardBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="4">
+                        <ListBox x:Name="ToolsListBox"
+                                 Background="Transparent"
+                                 BorderThickness="0"
+                                 Foreground="{StaticResource TextBrush}"
+                                 SelectionMode="Single"
+                                 PreviewMouseLeftButtonDown="OnToolDragStart"
+                                 PreviewMouseMove="OnToolDragging"
+                                 AllowDrop="True"
+                                 DragOver="OnToolDragOver"
+                                 Drop="OnToolDrop"
+                                 MouseDoubleClick="OnToolDoubleClick"
+                                 Padding="2">
+                            <ListBox.ItemContainerStyle>
+                                <Style TargetType="ListBoxItem">
+                                    <Setter Property="Padding" Value="0"/>
+                                    <Setter Property="Margin" Value="2,1"/>
+                                    <Setter Property="Cursor" Value="Hand"/>
+                                    <Setter Property="Template">
+                                        <Setter.Value>
+                                            <ControlTemplate TargetType="ListBoxItem">
+                                                <Border x:Name="ItemBd" Background="Transparent" CornerRadius="3" Padding="6,5">
+                                                    <ContentPresenter/>
+                                                </Border>
+                                                <ControlTemplate.Triggers>
+                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter TargetName="ItemBd" Property="Background" Value="{StaticResource HoverBackgroundBrush}"/>
+                                                    </Trigger>
+                                                    <Trigger Property="IsSelected" Value="True">
+                                                        <Setter TargetName="ItemBd" Property="Background" Value="{StaticResource HoverBackgroundBrush}"/>
+                                                        <Setter TargetName="ItemBd" Property="BorderBrush" Value="{StaticResource AccentBrush}"/>
+                                                        <Setter TargetName="ItemBd" Property="BorderThickness" Value="1"/>
+                                                    </Trigger>
+                                                </ControlTemplate.Triggers>
+                                            </ControlTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Style>
+                            </ListBox.ItemContainerStyle>
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="28"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <Border Grid.Column="0" Width="22" Height="22" Background="{StaticResource SecondaryBackgroundBrush}" CornerRadius="3" Margin="2,0,4,0" VerticalAlignment="Center">
+                                            <TextBlock Text="::" FontSize="10" Foreground="{StaticResource MutedTextBrush}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        </Border>
+                                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding DisplayName}" FontSize="12" Foreground="{StaticResource TextBrush}"/>
+                                            <TextBlock Text="{Binding ExePath}" FontSize="10" Foreground="{StaticResource MutedTextBrush}" TextTrimming="CharacterEllipsis" MaxWidth="420"/>
+                                        </StackPanel>
+                                        <Button Grid.Column="2" Content="x" FontSize="11" FontWeight="Bold"
+                                                Style="{StaticResource SettingsButtonStyle}"
+                                                Padding="6,2"
+                                                VerticalAlignment="Center"
+                                                Click="OnRemoveToolClick"
+                                                Tag="{Binding}"/>
+                                    </Grid>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                    </Border>
+                </Grid>
 
                 <StackPanel Grid.Row="2"
                             Orientation="Horizontal"

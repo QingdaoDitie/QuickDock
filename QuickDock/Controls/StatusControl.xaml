@@ -23,7 +23,7 @@
         </Style>
     </UserControl.Resources>
     
-    <Border Background="{StaticResource WindowPanelBrush}" 
+    <Border x:Name="RootBorder" Background="{StaticResource WindowPanelBrush}" 
             BorderBrush="{StaticResource BorderBrush}" 
             BorderThickness="1"
             Padding="10,3,6,3"

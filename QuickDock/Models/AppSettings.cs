@@ -5,7 +5,7 @@ namespace QuickDock.Models;
 
 public class AppSettings : INotifyPropertyChanged
 {
-    private bool _autoStart = true;
+    private bool _autoStart = false;
     private double _hotZoneWidth = 0.3;
     private int _hotZoneTriggerDelay = 500;
     private int _hotZoneEdgeSize = 1;
@@ -22,12 +22,13 @@ public class AppSettings : INotifyPropertyChanged
     private string _language = "zh";
     private double _dockOpacity = 0.9;
     private string _backgroundColor = "#1e1e1e";
+    private string _settingsBackgroundColor = "#f5f6f8";
     private double _scale = 1.0;
     private double _iconSize = 32;
     private double _iconSpacing = 5;
     private double _toolIconSize = 24;
     private bool _showStatusBar = true;
-    private string _weatherCity = "";
+    private string _weatherCity = "北京";
     private bool _toolsEnabled;
     private string _toolsRootPath = "";
     private List<ToolItem> _toolsItems = new();
@@ -136,6 +137,12 @@ public class AppSettings : INotifyPropertyChanged
         set => SetProperty(ref _backgroundColor, value);
     }
 
+    public string SettingsBackgroundColor
+    {
+        get => _settingsBackgroundColor;
+        set => SetProperty(ref _settingsBackgroundColor, value);
+    }
+
     public double Scale
     {
         get => _scale;
@@ -211,6 +218,7 @@ public class AppSettings : INotifyPropertyChanged
             Language = Language,
             DockOpacity = DockOpacity,
             BackgroundColor = BackgroundColor,
+            SettingsBackgroundColor = SettingsBackgroundColor,
             Scale = Scale,
             IconSize = IconSize,
             IconSpacing = IconSpacing,
@@ -242,6 +250,7 @@ public class AppSettings : INotifyPropertyChanged
         Language = source.Language;
         DockOpacity = source.DockOpacity;
         BackgroundColor = source.BackgroundColor;
+        SettingsBackgroundColor = source.SettingsBackgroundColor;
         Scale = source.Scale;
         IconSize = source.IconSize;
         IconSpacing = source.IconSpacing;
@@ -275,7 +284,8 @@ public class AppSettings : INotifyPropertyChanged
             SourceFolder = tool.SourceFolder,
             IsConfirmed = tool.IsConfirmed,
             CustomIconPath = tool.CustomIconPath,
-            Order = tool.Order
+            Order = tool.Order,
+            Enabled = tool.Enabled
         };
     }
 }

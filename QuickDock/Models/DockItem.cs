@@ -18,4 +18,5 @@ public class DockItem
     public string? Arguments { get; set; }
     public bool RunAsAdmin { get; set; }
     public bool AppendClipboard { get; set; }
+    public bool Enabled { get; set; } = true;
 }

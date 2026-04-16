@@ -141,14 +141,16 @@ public partial class MainWindow : Window
 
     private void ApplyToolsButtonVisibility()
     {
-        ToolsButton.Visibility = _configService.Settings.ToolsEnabled
+        ToolsButton.Visibility = _configService.Settings.ToolsEnabled && Tools.Count > 0
             ? Visibility.Visible
             : Visibility.Collapsed;
     }
 
     private void ApplyStatusBarVisibility()
     {
-        StatusControl.Visibility = _configService.Settings.ShowStatusBar ? Visibility.Visible : Visibility.Collapsed;
+        var visible = _configService.Settings.ShowStatusBar ? Visibility.Visible : Visibility.Collapsed;
+        StatusControl.Visibility = visible;
+        StatusBarSeparator.Visibility = visible;
     }
 
     private void ApplyOpacity()
@@ -158,17 +160,19 @@ public partial class MainWindow : Window
 
     private void ApplyBackgroundColor()
     {
+        SolidColorBrush brush;
         try
         {
             var color = (WpfColor)WpfColorConverter.ConvertFromString(_configService.Settings.BackgroundColor);
-            DockBorder.Background = new SolidColorBrush(color);
-            ToolsPanel.Background = new SolidColorBrush(color);
+            brush = new SolidColorBrush(color);
         }
         catch
         {
-            DockBorder.Background = new SolidColorBrush(WpfColor.FromRgb(0x1e, 0x1e, 0x1e));
-            ToolsPanel.Background = new SolidColorBrush(WpfColor.FromRgb(0x1e, 0x1e, 0x1e));
+            brush = new SolidColorBrush(WpfColor.FromRgb(0x1e, 0x1e, 0x1e));
         }
+        DockBorder.Background = brush;
+         ToolsPanel.Background = brush;
+         StatusControl.RootBorder.Background = brush;
     }
 
     private void ApplyScale()
@@ -487,7 +491,8 @@ public partial class MainWindow : Window
     private double MeasureToolsPanelHeight()
     {
         Dispatcher.Invoke(() => { }, DispatcherPriority.Render);
-        ToolsPanel.Measure(new WpfSize(ToolsPanel.Width, double.PositiveInfinity));
+        var availableWidth = DockBorder.ActualWidth > 0 ? DockBorder.ActualWidth : double.PositiveInfinity;
+        ToolsPanel.Measure(new WpfSize(availableWidth, double.PositiveInfinity));
         var desiredHeight = ToolsPanel.DesiredSize.Height;
 
         if (desiredHeight <= 0)

@@ -9,6 +9,7 @@ public class ToolItem
     public bool IsConfirmed { get; set; } = true;
     public string? CustomIconPath { get; set; }
     public int Order { get; set; }
+    public bool Enabled { get; set; } = true;
 }
 
 public class PendingToolFolder

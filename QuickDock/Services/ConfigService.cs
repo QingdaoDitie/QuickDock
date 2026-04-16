@@ -128,6 +128,12 @@ public class ConfigService
             changed = true;
         }
 
+        if (string.IsNullOrWhiteSpace(settings.SettingsBackgroundColor))
+        {
+            settings.SettingsBackgroundColor = "#f5f6f8";
+            changed = true;
+        }
+
         if (changed)
         {
             Save();
