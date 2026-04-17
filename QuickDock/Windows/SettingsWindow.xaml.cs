@@ -667,7 +667,7 @@ public partial class SettingsWindow : Window
             ShowNewFolderButton = false
         };
 
-        if (!string.IsNullOrEmpty(ToolsRootPathTextBox.Text) && 
+        if (!string.IsNullOrEmpty(ToolsRootPathTextBox.Text) &&
             System.IO.Directory.Exists(ToolsRootPathTextBox.Text))
         {
             dialog.SelectedPath = ToolsRootPathTextBox.Text;
@@ -677,10 +677,16 @@ public partial class SettingsWindow : Window
         {
             ToolsRootPathTextBox.Text = dialog.SelectedPath;
             _configService.Settings.ToolsRootPath = dialog.SelectedPath;
+            PerformScan();
         }
     }
 
     private void OnToolsScanClick(object sender, RoutedEventArgs e)
+    {
+        PerformScan();
+    }
+
+    private void PerformScan()
     {
         var rootPath = ToolsRootPathTextBox.Text;
         if (string.IsNullOrWhiteSpace(rootPath) || !System.IO.Directory.Exists(rootPath))
@@ -692,22 +698,54 @@ public partial class SettingsWindow : Window
         }
 
         var result = _scanService.Scan(rootPath);
-
         var existingItems = _configService.Settings.ToolsItems;
         var mergedItems = new List<ToolItem>();
 
+        foreach (var existing in existingItems.Where(i => i.IsConfirmed))
+        {
+            if (System.IO.File.Exists(existing.ExePath))
+            {
+                mergedItems.Add(existing);
+            }
+        }
+
         foreach (var confirmed in result.ConfirmedItems)
         {
-            var existing = existingItems.FirstOrDefault(i => 
+            var alreadyExists = mergedItems.Any(i =>
                 i.ExePath.Equals(confirmed.ExePath, StringComparison.OrdinalIgnoreCase));
-            if (existing != null)
-                mergedItems.Add(existing);
-            else
+            if (!alreadyExists)
+            {
                 mergedItems.Add(confirmed);
+            }
         }
 
         for (int i = 0; i < mergedItems.Count; i++)
             mergedItems[i].Order = i;
+
+        foreach (var pending in result.PendingFolders)
+        {
+            pending.Candidates = pending.Candidates
+                .Where(c => !mergedItems.Any(m =>
+                    m.ExePath.Equals(c, StringComparison.OrdinalIgnoreCase)))
+                .ToList();
+        }
+        result.PendingFolders.RemoveAll(p => p.Candidates.Count == 0);
+
+        foreach (var pending in result.PendingFolders.ToList())
+        {
+            if (pending.Candidates.Count == 1)
+            {
+                mergedItems.Add(new ToolItem
+                {
+                    DisplayName = System.IO.Path.GetFileNameWithoutExtension(pending.Candidates[0]),
+                    ExePath = pending.Candidates[0],
+                    SourceFolder = pending.FolderPath,
+                    IsConfirmed = true,
+                    Order = mergedItems.Count
+                });
+                result.PendingFolders.Remove(pending);
+            }
+        }
 
         _configService.Settings.ToolsItems = mergedItems;
         _configService.Settings.ToolsRootPath = rootPath;

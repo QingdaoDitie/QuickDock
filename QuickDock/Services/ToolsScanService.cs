@@ -77,7 +77,8 @@ public class ToolsScanService
     private bool IsExcluded(string exePath)
     {
         var name = Path.GetFileNameWithoutExtension(exePath).ToLower();
-        return ExcludeKeywords.Any(k => name.Contains(k));
+        return ExcludeKeywords.Any(k =>
+            k.StartsWith("_") ? name.Contains(k) : name.StartsWith(k));
     }
 
     private ToolItem CreateToolItem(string exePath, bool isConfirmed, string? sourceFolder = null)
