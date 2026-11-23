@@ -1,4 +1,4 @@
-# QuickDock
+# QuickDock｜一碰，工具尽在手边
 
 QuickDock 是一款轻量的 Windows Dock。把鼠标移到屏幕底部即可打开常用程序和网页，也可以在 Dock 上查看天气、设备信息、QQ 音乐或 AI 额度。
 
