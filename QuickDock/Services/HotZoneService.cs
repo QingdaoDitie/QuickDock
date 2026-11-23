@@ -80,6 +80,7 @@ public class HotZoneService : IDisposable
     private readonly double _hotZoneWidthRatio;
     private readonly int _triggerDelayMs;
     private readonly int _edgeSize;
+    private readonly Func<bool> _isSuppressed;
     private bool _isInHotZone;
     private bool _disposed;
     private DateTime _hotZoneEnterTime;
@@ -88,8 +89,9 @@ public class HotZoneService : IDisposable
     public event Action? HotZoneEntered;
     public event Action? HotZoneLeft;
 
-    public HotZoneService(double hotZoneWidthRatio = 0.3, int triggerDelayMs = 500, int edgeSize = 1, int checkInterval = 50)
+    public HotZoneService(Func<bool> isSuppressed, double hotZoneWidthRatio = 0.3, int triggerDelayMs = 500, int edgeSize = 1, int checkInterval = 50)
     {
+        _isSuppressed = isSuppressed;
         _hotZoneWidthRatio = hotZoneWidthRatio;
         _triggerDelayMs = triggerDelayMs;
         _edgeSize = edgeSize;
@@ -112,6 +114,12 @@ public class HotZoneService : IDisposable
 
     private void Timer_Tick(object? sender, EventArgs e)
     {
+        if (_isSuppressed())
+        {
+            ResetHotZoneState();
+            return;
+        }
+
         if (!GetCursorPos(out POINT point))
             return;
 

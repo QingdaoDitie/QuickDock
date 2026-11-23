@@ -1,206 +1,74 @@
 # QuickDock
 
+QuickDock 是一款轻量的 Windows Dock。把鼠标移到屏幕底部即可打开常用程序和网页，也可以在 Dock 上查看天气、设备信息、QQ 音乐或 AI 额度。
+
 <p align="center">
-  <img src="QuickDock/Assets/app.ico" alt="QuickDock Logo" width="128" height="128">
+  <img src="docs/images/dock.png" alt="QuickDock 显示 QQ 音乐、额度圆环和常用快捷方式" width="640">
 </p>
 
-轻量级 Windows 快捷启动工具，基于 WPF .NET 8 开发，支持自定义快捷方式、工具集管理、天气显示、系统资源监控。
+*界面使用示例曲目和额度数据。*
 
-## 功能特性
+## 下载与安装
 
-### 快捷启动
-- 支持添加应用程序、文件夹、网页、命令四种类型
-- 拖拽排序，自由调整位置
-- 支持以管理员权限运行
-- 自动提取程序图标，支持自定义图标
-- 支持从桌面拖拽 .lnk 快捷方式直接添加
-- 自动解析 .lnk 快捷方式指向的真实程序路径
-- 每个快捷方式支持启用/禁用开关
+1. 从 [GitHub Releases](https://github.com/QingdaoDitie/QuickDock/releases/latest) 下载 Windows x64 ZIP。
+2. 使用 Windows 10 1809 或更高版本，或 Windows 11，并安装 [.NET 8 Desktop Runtime（x64）](https://dotnet.microsoft.com/zh-cn/download/dotnet/8.0)。
+3. 解压整个 ZIP，运行目录里的 **QuickDock.exe**。首次启动会打开「基础设置」。日常可以从系统托盘菜单进入设置或退出。
 
-### 工具集管理
-- 指定工具目录后自动扫描其中的可执行文件
-- 智能排除安装程序、卸载程序等辅助文件
-- 多 exe 的子目录自动进入待确认列表，由用户选择主程序
-- 选择工具目录后自动执行首次扫描
-- 重新扫描时保留已有工具的设置（名称、图标、排序、启用状态）
-- 工具支持拖拽排序、双击编辑、启用/禁用
-- 独立的工具管理窗口，与设置窗口分离
+升级时先退出 QuickDock，再将新版 ZIP 解压覆盖旧目录。快捷方式和 Dock 设置保存在程序目录的 `config.json`，天气设置保存在 `widget-settings/weather.json`。发布包不会覆盖这些用户文件。
 
-### 天气显示
-- 实时显示当前城市天气状况
-- 支持手动刷新，可配置刷新间隔
-- 显示温度、天气状况
+## Dock 与小组件
 
-### 系统资源监控
-- 实时显示 CPU 利用率
-- 实时显示内存使用率
-- 实时显示 GPU 利用率（3D 引擎）
-- 可配置刷新间隔
+默认快捷方式包括 CMD、PowerShell（管理员）和 ChatGPT 网页。在「设置 → 快捷方式」可以添加程序、文件夹、网页和命令，也可以把桌面的 `.lnk` 拖到 Dock。工具集支持从指定目录扫描程序，并将工具组织在可展开的面板里。
 
-### 热区触发
-- 鼠标移至屏幕底部指定区域自动显示 Dock
-- 鼠标移开后自动隐藏
-- 可调节热区宽度、边缘大小
-- 可调节触发延迟和隐藏容差
-- 鼠标位置检测定时器，防止快速触碰热区后 Dock 不缩回
+在「设置 → 基础」为左、右槽位各选一个小组件。选到另一侧正在使用的组件时，两侧会自动交换。
 
-### 设置系统
-- 左侧导航 + 右侧内容的分页式设置界面
-- 6 个设置页面：基础、外观、快捷方式、热区、工具、关于
-- 统一深色主题，背景色跟随 Dock 自定义颜色
-- 支持中英文双语切换，实时生效
-- 关于页面显示版本号、配置文件路径
+| 小组件 | 功能 |
+| --- | --- |
+| 天气 | 查看当前天气、短临降水趋势和气象预警。在槽位旁的「设置」中选城市，并调整刷新频率和预警动画。 |
+| 设备信息 | 查看 CPU、内存及 GPU 利用率。 |
+| QQ 音乐 | 上一首、播放／暂停、下一首。当前歌名显示在按钮右边，悬停可查看完整歌名和歌手。 |
+| AI 额度 | 两个圆环显示短时和周额度的剩余百分比。悬停可看各来源的重置时间，点击可刷新。仅展示读取成功的来源。 |
 
-### 系统托盘
-- 最小化到系统托盘运行
-- 右键菜单快速操作
-- 支持开机自启动
+<p align="center">
+  <img src="docs/images/settings.png" alt="QuickDock 基础设置与左右小组件选择" width="860">
+</p>
 
-## 版本历史
+「普通模式」按热区触发。游戏模式会在检测到前台全屏游戏时暂停弹出，勿扰模式会暂停 Dock 和小组件弹窗。
 
-### v1.1.0
-- 统一深色主题设计语言
-- 重构设置窗口为分页导航式布局
-- 统一快捷方式和工具的列表 UI（图标、名称、路径、开关、删除）
-- 列表支持拖拽排序、双击编辑
-- 工具集功能：目录扫描、待确认工具、自动/手动扫描、设置记忆
-- 状态栏背景色跟随 Dock 自定义颜色
-- 隐藏状态栏时同时隐藏分隔符
-- 默认城市改为北京，默认不开启自启动
-- 双击 QuickDock 标题可打开官网
+## 接入 QQ 音乐与 AI 额度
 
-### v1.0.0
-- 快捷启动基本功能
-- 天气显示和系统资源监控
-- 热区触发显示/隐藏
-- 系统托盘集成
-- 多语言支持（中英文）
-- Windows 分屏兼容性
-- 剪贴板追加功能
+- **QQ 音乐**。在 Windows 版 QQ 音乐中打开「显示系统媒体传输控制（SMTC）」，播放任意一首歌即可连接。QuickDock 使用 Windows 媒体会话读取当前曲目信息。[QQMusicMonitor](https://github.com/GotKiCry/QQMusicMonitor/blob/main/Project.md) · [Windows 媒体会话文档](https://learn.microsoft.com/en-us/uwp/api/windows.media.control.globalsystemmediatransportcontrolssession)
+- **Codex**。安装 Codex CLI 并用 ChatGPT 账号登录。QuickDock 会通过本地 Codex App Server 查询额度。自定义安装位置可通过环境变量 `QUICKDOCK_CODEX_PATH` 指向 `codex.exe`。[Codex App Server 文档](https://learn.chatgpt.com/docs/app-server)
+- **Claude Code**。使用 Claude Code 的状态栏命令传递订阅额度。收到模型响应后，符合条件的 Claude Code 会向状态栏提供额度快照。QuickDock 随后读取快照。[Claude Code 状态栏文档](https://code.claude.com/docs/en/statusline)
 
-## 安装
+<details>
+<summary>配置 Claude Code 状态栏</summary>
 
-### 环境要求
-- Windows 10/11
-- .NET 8.0 Runtime
+在 `%USERPROFILE%\.claude\settings.json` 中加入以下设置，将路径改为本机 QuickDock 安装目录。已有自定义状态栏时，可将相同的状态栏输入同时交给原命令和随包脚本。
 
-### 从源码编译
-
-```bash
-git clone https://github.com/QingdaoDitie/QuickDock.git
-cd QuickDock/QuickDock
-dotnet build -c Release
+```json
+{
+  "statusLine": {
+    "type": "command",
+    "command": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File \"C:/Apps/QuickDock/Widgets/ClaudeQuotaStatusLine.ps1\""
+  }
+}
 ```
 
-编译完成后，可执行文件位于 `bin/Release/net8.0-windows/QuickDock.exe`
+脚本只会把额度百分比和重置时间保存至 `%LOCALAPPDATA%\QuickDock\claude-quota.json`。重置时间过去后，QuickDock 会等待 Claude Code 的下一次快照。
 
-## 使用说明
+</details>
 
-### 基本操作
+## 从源码构建
 
-1. **启动程序**：双击 QuickDock.exe 运行
-2. **显示 Dock**：将鼠标移至屏幕底部热区
-3. **隐藏 Dock**：鼠标移开 Dock 区域
-4. **打开设置**：右键点击托盘图标，选择"设置"
+在 Windows 上安装 .NET 8 SDK，并在仓库根目录执行：
 
-### 添加快捷方式
-
-1. 打开设置窗口，进入"快捷方式"页面
-2. 点击"添加"按钮，或从桌面拖拽 .lnk 文件到列表
-3. 填写以下信息：
-   - **名称**：显示名称
-   - **类型**：应用程序/文件夹/网页/命令
-   - **路径**：程序路径、文件夹路径或网址
-   - **参数**：启动参数（可选）
-   - **管理员权限**：是否以管理员身份运行
-4. 双击已有项目可编辑，左侧开关可启用/禁用
-
-### 使用工具集
-
-1. 打开设置窗口，进入"工具"页面
-2. 启用工具功能，点击"浏览"选择工具目录
-3. 选择目录后自动扫描其中的 exe 文件
-4. 扫描到的工具自动添加到已添加列表
-5. 如果子目录中有多个 exe，会进入"待确认"列表，需手动选择主程序
-6. 后续添加新工具后点击"重新扫描"，已有工具的设置不会丢失
-
-### 配置选项
-
-| 选项 | 说明 | 默认值 |
-|------|------|--------|
-| 开机自启 | 系统启动时自动运行 | 关闭 |
-| 语言 | 界面语言（中文/英文） | 中文 |
-| 背景色 | Dock 和设置窗口背景颜色 | #1e1e1e |
-| 透明度 | Dock 窗口透明度 | 0.9 |
-| 缩放比例 | 整体缩放比例 | 1.0 |
-| 图标大小 | 快捷方式图标尺寸 | 32px |
-| 图标间距 | 快捷方式之间的间距 | 5px |
-| 工具图标 | 工具图标尺寸 | 24px |
-| 显示动画 | Dock 显示动画时长 | 220ms |
-| 隐藏动画 | Dock 隐藏动画时长 | 180ms |
-| 展开动画 | 工具面板展开时长 | 140ms |
-| 收起动画 | 工具面板收起时长 | 110ms |
-| 启动预览 | 启动时预览显示时长 | 1500ms |
-| 显示状态栏 | 是否显示天气和资源监控 | 开启 |
-| 天气城市 | 天气查询城市 | 北京 |
-| 天气刷新 | 天气刷新间隔 | 30 分钟 |
-| 资源刷新 | 资源监控刷新间隔 | 3 秒 |
-| 触发延迟 | 热区触发延迟 | 0ms |
-| 边缘大小 | 热区边缘范围 | 4px |
-| 隐藏容差 | 鼠标离开后隐藏延迟 | 200px |
-
-### 配置文件
-
-配置文件位于程序目录下的 `config.json`，包含快捷方式列表和所有设置项。可双击 Dock 标题栏打开设置，也可通过"关于"页面打开配置文件所在目录。
-
-## 技术栈
-
-- **.NET 8** - 运行时框架
-- **WPF** - 用户界面框架
-- **C#** - 开发语言
-- **Hardcodet.NotifyIcon.Wpf** - 系统托盘支持
-- **System.Management** - 系统信息获取
-
-## 项目结构
-
+```powershell
+dotnet build QuickDock.sln -c Release
 ```
-QuickDock/
-├── Assets/
-│   ├── app.ico               # 应用程序图标
-│   └── tools.png             # 工具默认图标
-├── Controls/
-│   ├── DockItemControl.xaml  # 快捷方式控件
-│   └── StatusControl.xaml    # 状态栏控件
-├── Models/
-│   ├── AppSettings.cs        # 应用设置模型
-│   ├── DockItem.cs           # 快捷方式模型
-│   ├── ToolItem.cs           # 工具模型
-│   └── WeatherData.cs        # 天气数据模型
-├── Services/
-│   ├── AutoStartService.cs   # 开机自启服务
-│   ├── ConfigService.cs      # 配置管理服务
-│   ├── HotZoneService.cs     # 热区检测服务
-│   ├── IconCacheService.cs   # 图标缓存服务
-│   ├── ItemIconConverter.cs  # 图标加载转换器
-│   ├── LanguageService.cs    # 多语言服务
-│   ├── LaunchService.cs      # 程序启动服务
-│   ├── StatusService.cs      # 状态信息服务
-│   ├── SystemResourceService.cs # 系统资源监控
-│   ├── ToolsScanService.cs   # 工具目录扫描服务
-│   └── WeatherService.cs     # 天气查询服务
-├── Windows/
-│   ├── ItemEditWindow.xaml   # 项目编辑窗口
-│   ├── SettingsWindow.xaml   # 设置窗口（分页式）
-│   └── ToolsManageWindow.xaml # 工具管理窗口
-├── Resources/
-│   └── Styles.xaml           # 全局样式和深色主题
-├── App.xaml                  # 应用程序入口
-├── MainWindow.xaml           # 主窗口
-└── QuickDock.csproj          # 项目文件
-```
+
+编译输出位于 `QuickDock/bin/Release/net8.0-windows10.0.17763.0/`。公开源码含 Dock、组件接口和三个内置模块。天气作为独立 DLL 分发，发布包内已带 `Widgets/QuickDock.Weather.dll`。源码构建需要天气功能时，将该 DLL 放入输出目录的 `Widgets` 文件夹后重启程序。
 
 ## 许可证
 
-[MIT License](LICENSE)
-
-本项目采用 MIT 许可证开源，您可以自由使用、修改、分发本软件，包括商业用途。唯一要求是在副本中包含原始版权声明和许可证声明。
+公开源码采用 [MIT License](LICENSE)。天气模块以二进制形式随发布包分发。

@@ -1,11 +1,21 @@
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace QuickDock.Models;
+
+public enum PopupMode
+{
+    Normal,
+    Game,
+    DoNotDisturb
+}
 
 public class AppSettings : INotifyPropertyChanged
 {
     private bool _autoStart = false;
+    private PopupMode _popupMode;
     private double _hotZoneWidth = 0.3;
     private int _hotZoneTriggerDelay = 500;
     private int _hotZoneEdgeSize = 1;
@@ -17,7 +27,6 @@ public class AppSettings : INotifyPropertyChanged
     private int _toolsCollapseAnimationDuration = 110;
     private int _startupPreviewDuration = 1500;
     private int _autoHideTolerance = 10;
-    private int _weatherRefreshIntervalMinutes = 30;
     private int _resourceRefreshIntervalSeconds = 5;
     private string _language = "zh";
     private double _dockOpacity = 0.9;
@@ -28,10 +37,20 @@ public class AppSettings : INotifyPropertyChanged
     private double _iconSpacing = 5;
     private double _toolIconSize = 24;
     private bool _showStatusBar = true;
-    private string _weatherCity = "北京";
     private bool _toolsEnabled;
     private string _toolsRootPath = "";
     private List<ToolItem> _toolsItems = new();
+
+    private WidgetSlots _widgets = WidgetSlots.Default;
+
+    public WidgetSlots Widgets
+    {
+        get => _widgets;
+        set => SetProperty(ref _widgets, value is { IsValid: true } ? value : WidgetSlots.Default);
+    }
+
+    [JsonExtensionData]
+    public Dictionary<string, JsonElement> LegacySettings { get; set; } = new();
 
     public event PropertyChangedEventHandler? PropertyChanged;
 
@@ -45,6 +64,12 @@ public class AppSettings : INotifyPropertyChanged
     {
         get => _hotZoneWidth;
         set => SetProperty(ref _hotZoneWidth, value);
+    }
+
+    public PopupMode PopupMode
+    {
+        get => _popupMode;
+        set => SetProperty(ref _popupMode, value);
     }
 
     public int HotZoneTriggerDelay
@@ -107,12 +132,6 @@ public class AppSettings : INotifyPropertyChanged
         set => SetProperty(ref _autoHideTolerance, value);
     }
 
-    public int WeatherRefreshIntervalMinutes
-    {
-        get => _weatherRefreshIntervalMinutes;
-        set => SetProperty(ref _weatherRefreshIntervalMinutes, value);
-    }
-
     public int ResourceRefreshIntervalSeconds
     {
         get => _resourceRefreshIntervalSeconds;
@@ -173,12 +192,6 @@ public class AppSettings : INotifyPropertyChanged
         set => SetProperty(ref _showStatusBar, value);
     }
 
-    public string WeatherCity
-    {
-        get => _weatherCity;
-        set => SetProperty(ref _weatherCity, value);
-    }
-
     public bool ToolsEnabled
     {
         get => _toolsEnabled;
@@ -202,6 +215,7 @@ public class AppSettings : INotifyPropertyChanged
         return new AppSettings
         {
             AutoStart = AutoStart,
+            PopupMode = PopupMode,
             HotZoneWidth = HotZoneWidth,
             HotZoneTriggerDelay = HotZoneTriggerDelay,
             HotZoneEdgeSize = HotZoneEdgeSize,
@@ -213,7 +227,6 @@ public class AppSettings : INotifyPropertyChanged
             ToolsCollapseAnimationDuration = ToolsCollapseAnimationDuration,
             StartupPreviewDuration = StartupPreviewDuration,
             AutoHideTolerance = AutoHideTolerance,
-            WeatherRefreshIntervalMinutes = WeatherRefreshIntervalMinutes,
             ResourceRefreshIntervalSeconds = ResourceRefreshIntervalSeconds,
             Language = Language,
             DockOpacity = DockOpacity,
@@ -224,7 +237,7 @@ public class AppSettings : INotifyPropertyChanged
             IconSpacing = IconSpacing,
             ToolIconSize = ToolIconSize,
             ShowStatusBar = ShowStatusBar,
-            WeatherCity = WeatherCity,
+            Widgets = Widgets,
             ToolsEnabled = ToolsEnabled,
             ToolsRootPath = ToolsRootPath,
             ToolsItems = ToolsItems.Select(CloneToolItem).ToList()
@@ -234,6 +247,7 @@ public class AppSettings : INotifyPropertyChanged
     public void CopyFrom(AppSettings source)
     {
         AutoStart = source.AutoStart;
+        PopupMode = source.PopupMode;
         HotZoneWidth = source.HotZoneWidth;
         HotZoneTriggerDelay = source.HotZoneTriggerDelay;
         HotZoneEdgeSize = source.HotZoneEdgeSize;
@@ -245,7 +259,6 @@ public class AppSettings : INotifyPropertyChanged
         ToolsCollapseAnimationDuration = source.ToolsCollapseAnimationDuration;
         StartupPreviewDuration = source.StartupPreviewDuration;
         AutoHideTolerance = source.AutoHideTolerance;
-        WeatherRefreshIntervalMinutes = source.WeatherRefreshIntervalMinutes;
         ResourceRefreshIntervalSeconds = source.ResourceRefreshIntervalSeconds;
         Language = source.Language;
         DockOpacity = source.DockOpacity;
@@ -256,7 +269,7 @@ public class AppSettings : INotifyPropertyChanged
         IconSpacing = source.IconSpacing;
         ToolIconSize = source.ToolIconSize;
         ShowStatusBar = source.ShowStatusBar;
-        WeatherCity = source.WeatherCity;
+        Widgets = source.Widgets;
         ToolsEnabled = source.ToolsEnabled;
         ToolsRootPath = source.ToolsRootPath;
         ToolsItems = source.ToolsItems.Select(CloneToolItem).ToList();

@@ -20,9 +20,37 @@
         PreviewMouseMove="OnWindowPreviewMouseMove">
     
     <Window.Resources>
+        <Style x:Key="WidgetNotificationActionStyle" TargetType="Button">
+            <Setter Property="Background" Value="#22FFFFFF"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderBrush" Value="#38FFFFFF"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="8,4"/>
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="ActionBorder"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="7"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="ActionBorder" Property="Background" Value="#38FFFFFF"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
     </Window.Resources>
 
-    <Grid x:Name="MainGrid">
+    <Grid x:Name="MainGrid" Background="#01000000">
         <StackPanel>
             <Border x:Name="DockBorder"
                     Style="{StaticResource DockPanelStyle}"
@@ -71,38 +99,85 @@
                     </Button>
                 </StackPanel>
             </Border>
-            
-            <Border x:Name="ToolsPanel"
-                    Style="{StaticResource DockPanelStyle}"
-                    Padding="10,8"
-                    HorizontalAlignment="Center"
-                    Visibility="Collapsed"
+
+            <StackPanel x:Name="ToolsPanelViewport"
+                        Width="{Binding ElementName=DockBorder, Path=ActualWidth}"
+                        Height="0"
+                        Margin="0,4,0,0"
+                        Visibility="Collapsed"
+                        ClipToBounds="True">
+                <Border x:Name="ToolsPanel"
+                        Style="{StaticResource DockPanelStyle}"
+                        Padding="10,8">
+                    <ScrollViewer HorizontalAlignment="Center"
+                                  HorizontalScrollBarVisibility="Auto"
+                                  VerticalScrollBarVisibility="Disabled"
+                                  CanContentScroll="False"
+                                  PanningMode="HorizontalOnly">
+                        <ItemsControl x:Name="ToolsItems"
+                                      ItemsSource="{Binding Tools}"
+                                      HorizontalAlignment="Left"
+                                      AllowDrop="True"
+                                      DragOver="OnToolsItemsDragOver"
+                                      Drop="OnToolsItemsDrop">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <StackPanel Orientation="Horizontal"/>
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <local:DockItemControl x:Name="ToolItem"/>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+                </Border>
+            </StackPanel>
+
+            <Border x:Name="WidgetNotificationPanel"
+                    Width="{Binding ElementName=DockBorder, Path=ActualWidth}"
                     Height="0"
-                    MaxWidth="{Binding ElementName=DockBorder, Path=ActualWidth}"
-                    ClipToBounds="True">
-                <ScrollViewer HorizontalAlignment="Center"
-                              HorizontalScrollBarVisibility="Auto"
-                              VerticalScrollBarVisibility="Disabled"
-                              CanContentScroll="False"
-                              PanningMode="HorizontalOnly">
-                    <ItemsControl x:Name="ToolsItems" 
-                                  ItemsSource="{Binding Tools}"
-                                  HorizontalAlignment="Left"
-                                  AllowDrop="True"
-                                  DragOver="OnToolsItemsDragOver"
-                                  Drop="OnToolsItemsDrop">
-                        <ItemsControl.ItemsPanel>
-                            <ItemsPanelTemplate>
-                                <StackPanel Orientation="Horizontal"/>
-                            </ItemsPanelTemplate>
-                        </ItemsControl.ItemsPanel>
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                                <local:DockItemControl x:Name="ToolItem"/>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
-                </ScrollViewer>
+                    Margin="0,6,0,0"
+                    Padding="14,10"
+                    HorizontalAlignment="Center"
+                    Background="#E91C1C1E"
+                    BorderBrush="#5FFFFFFF"
+                    BorderThickness="1"
+                    CornerRadius="18"
+                    ClipToBounds="True"
+                    Opacity="0"
+                    Visibility="Collapsed">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock x:Name="WidgetNotificationIcon"
+                               FontSize="24"
+                               VerticalAlignment="Top"
+                               Margin="0,0,10,0"/>
+                    <StackPanel Grid.Column="1" Margin="0,0,10,0">
+                        <TextBlock x:Name="WidgetNotificationTitle"
+                                   Foreground="White"
+                                   FontWeight="SemiBold"
+                                   TextTrimming="CharacterEllipsis"/>
+                        <TextBlock x:Name="WidgetNotificationMessage"
+                                   Margin="0,3,0,0"
+                                   Foreground="#E6FFFFFF"
+                                   FontSize="12"
+                                   TextWrapping="Wrap"
+                                   MaxHeight="38"/>
+                        <ContentPresenter x:Name="WidgetNotificationDetails"/>
+                    </StackPanel>
+                    <Button Grid.Column="2"
+                            x:Name="WidgetNotificationMuteButton"
+                            Content="休息一会"
+                            Style="{StaticResource WidgetNotificationActionStyle}"
+                            VerticalAlignment="Center"
+                            Click="OnWidgetNotificationMuteClick"/>
+                </Grid>
             </Border>
         </StackPanel>
     </Grid>

@@ -8,6 +8,10 @@ namespace QuickDock.Services;
 
 public class ConfigService
 {
+    private const string ChatGptShortcutId = "3";
+    private const string ChatGptUrl = "https://chatgpt.com/";
+    private const string ChatGptIconPath = "icons/chatgpt.png";
+
     private static readonly string ConfigPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "config.json");
     private static readonly string IconsPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "icons");
     
@@ -21,9 +25,11 @@ public class ConfigService
 
     public List<DockItem> Items { get; private set; } = new();
     public AppSettings Settings { get; private set; } = new();
+    internal bool IsFirstRun { get; }
 
     public ConfigService()
     {
+        IsFirstRun = !File.Exists(ConfigPath);
         EnsureIconsDirectory();
         Load();
         ApplyLanguage();
@@ -46,9 +52,17 @@ public class ConfigService
         SettingsChanged?.Invoke(e.PropertyName);
     }
 
-    private void MigrateSettings(AppSettings settings)
+    private void MigrateConfig(AppSettings settings)
     {
         var changed = false;
+
+        var chatGpt = Items.Find(item => item.Id == ChatGptShortcutId && item.Type == DockItemType.WebPage &&
+            string.Equals(item.Path, ChatGptUrl, StringComparison.OrdinalIgnoreCase));
+        if (chatGpt != null && string.IsNullOrWhiteSpace(chatGpt.IconPath))
+        {
+            chatGpt.IconPath = ChatGptIconPath;
+            changed = true;
+        }
 
         if (settings.HotZoneTriggerDelay <= 0)
         {
@@ -116,12 +130,6 @@ public class ConfigService
             changed = true;
         }
 
-        if (settings.WeatherRefreshIntervalMinutes <= 0)
-        {
-            settings.WeatherRefreshIntervalMinutes = 30;
-            changed = true;
-        }
-
         if (settings.ResourceRefreshIntervalSeconds <= 0)
         {
             settings.ResourceRefreshIntervalSeconds = 5;
@@ -161,7 +169,16 @@ public class ConfigService
                     Items = config.Items ?? new List<DockItem>();
                     Settings = config.Settings ?? new AppSettings();
                     SubscribeToSettings(Settings);
-                    MigrateSettings(Settings);
+                    using var document = JsonDocument.Parse(json);
+                    if (document.RootElement.TryGetProperty("Settings", out var savedSettings) &&
+                        savedSettings.ValueKind == JsonValueKind.Object &&
+                        !savedSettings.TryGetProperty(nameof(AppSettings.Widgets), out _) &&
+                        Settings.LegacySettings.TryGetValue("WeatherEnabled", out var weatherEnabled) &&
+                        weatherEnabled.ValueKind == JsonValueKind.False)
+                    {
+                        Settings.Widgets = new WidgetSlots(WidgetKind.Music, WidgetKind.Device);
+                    }
+                    MigrateConfig(Settings);
                     ApplyLanguage();
                 }
             }
@@ -195,6 +212,14 @@ public class ConfigService
                 Type = DockItemType.Application,
                 Path = "powershell.exe",
                 RunAsAdmin = true
+            },
+            new DockItem
+            {
+                Id = ChatGptShortcutId,
+                Name = "ChatGPT",
+                Type = DockItemType.WebPage,
+                Path = ChatGptUrl,
+                IconPath = ChatGptIconPath
             }
         };
         Settings = new AppSettings();

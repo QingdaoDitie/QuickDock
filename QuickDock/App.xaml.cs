@@ -1,15 +1,29 @@
 using System.Windows;
+using System.Windows.Media;
 using System.Windows.Threading;
+using System.Runtime.InteropServices;
 using Hardcodet.Wpf.TaskbarNotification;
 using QuickDock.Models;
 using QuickDock.Services;
 using QuickDock.Windows;
+using WpfMenuItem = System.Windows.Controls.MenuItem;
 
 namespace QuickDock;
 
 public partial class App : System.Windows.Application
 {
+    [DllImport("user32.dll")]
+    private static extern bool GetCursorPos(out POINT lpPoint);
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct POINT
+    {
+        public int X;
+        public int Y;
+    }
+
     private ConfigService? _configService;
+    private PopupPolicy? _popupPolicy;
     private HotZoneService? _hotZoneService;
     private MainWindow? _mainWindow;
     private TaskbarIcon? _taskbarIcon;
@@ -23,6 +37,7 @@ public partial class App : System.Windows.Application
         AppDomain.CurrentDomain.UnhandledException += OnDomainUnhandledException;
 
         _configService = new ConfigService();
+        _popupPolicy = new PopupPolicy(_configService.Settings);
         _configService.SettingsChanged += OnSettingsChanged;
         _autoStartService = new AutoStartService();
         
@@ -31,20 +46,20 @@ public partial class App : System.Windows.Application
             _autoStartService.Enable();
         }
 
-        _hotZoneService = new HotZoneService(
-            _configService.Settings.HotZoneWidth,
-            _configService.Settings.HotZoneTriggerDelay,
-            _configService.Settings.HotZoneEdgeSize);
-        _hotZoneService.HotZoneEntered += OnHotZoneEntered;
-        _hotZoneService.HotZoneLeft += OnHotZoneLeft;
-        _hotZoneService.Start();
-
-        _mainWindow = new MainWindow(_configService);
+        _mainWindow = new MainWindow(_configService, _popupPolicy);
         _mainWindow.MouseLeave += OnMainWindowMouseLeave;
 
+        RecreateHotZoneService();
         CreateTaskbarIcon();
 
-        _mainWindow.ShowStartupAnimation();
+        if (_configService.IsFirstRun)
+        {
+            Dispatcher.InvokeAsync(OpenSettings, DispatcherPriority.Loaded);
+        }
+        else
+        {
+            _mainWindow.ShowStartupAnimation();
+        }
     }
 
     private void OnDispatcherUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)
@@ -91,24 +106,58 @@ public partial class App : System.Windows.Application
             ToolTipText = Lang.T("Tray.ToolTip")
         };
 
+        UpdateTrayMenu();
+        _taskbarIcon.TrayMouseDoubleClick += (s, e) => ShowDock();
+    }
+
+    private void UpdateTrayMenu()
+    {
+        if (_taskbarIcon == null || _configService == null)
+        {
+            return;
+        }
+
+        var config = _configService;
         var contextMenu = new System.Windows.Controls.ContextMenu();
-        
-        var showItem = new System.Windows.Controls.MenuItem { Header = Lang.T("Tray.Show") };
+
+        var showItem = new WpfMenuItem { Header = Lang.T("Tray.Show") };
         showItem.Click += (s, e) => ShowDock();
         contextMenu.Items.Add(showItem);
 
-        var settingsItem = new System.Windows.Controls.MenuItem { Header = Lang.T("Tray.Settings") };
+        var modeMenu = new WpfMenuItem { Header = Lang.T("Settings.PopupMode") };
+        foreach (var mode in Enum.GetValues<PopupMode>())
+        {
+            var modeItem = new WpfMenuItem
+            {
+                Header = Lang.T($"Settings.PopupMode.{mode}"),
+                IsCheckable = true
+            };
+            contextMenu.Opened += (_, _) => modeItem.IsChecked = config.Settings.PopupMode == mode;
+            modeItem.Click += (_, _) =>
+            {
+                modeItem.IsChecked = true;
+                if (config.Settings.PopupMode != mode)
+                {
+                    config.Settings.PopupMode = mode;
+                    config.Save();
+                }
+            };
+            modeMenu.Items.Add(modeItem);
+        }
+        contextMenu.Items.Add(modeMenu);
+
+        var settingsItem = new WpfMenuItem { Header = Lang.T("Tray.Settings") };
         settingsItem.Click += (s, e) => OpenSettings();
         contextMenu.Items.Add(settingsItem);
 
         contextMenu.Items.Add(new System.Windows.Controls.Separator());
 
-        var exitItem = new System.Windows.Controls.MenuItem { Header = Lang.T("Tray.Exit") };
+        var exitItem = new WpfMenuItem { Header = Lang.T("Tray.Exit") };
         exitItem.Click += (s, e) => Shutdown();
         contextMenu.Items.Add(exitItem);
 
         _taskbarIcon.ContextMenu = contextMenu;
-        _taskbarIcon.TrayMouseDoubleClick += (s, e) => ShowDock();
+        _taskbarIcon.ToolTipText = Lang.T("Tray.ToolTip");
     }
 
     private void OnHotZoneEntered()
@@ -121,11 +170,19 @@ public partial class App : System.Windows.Application
                 _mainWindow.Activate();
             }
             _mainWindow?.SlideIn();
+            _mainWindow?.ShowLatestWidgetNotificationOnDockTouch();
         });
     }
 
-    private void OnHotZoneLeft()
+    private bool SuppressPopupsIfNeeded()
     {
+        if (_popupPolicy?.IsSuppressed != true)
+        {
+            return false;
+        }
+
+        _mainWindow?.DismissPopups();
+        return true;
     }
 
     private void OnMainWindowMouseLeave(object sender, System.Windows.Input.MouseEventArgs e)
@@ -135,15 +192,39 @@ public partial class App : System.Windows.Application
             return;
         }
 
+        if (_mainWindow != null && IsCursorWithinWindowBounds(_mainWindow))
+        {
+            return;
+        }
+
         _mainWindow?.SlideOut();
+    }
+
+    private bool IsCursorWithinWindowBounds(Window window)
+    {
+        if (!GetCursorPos(out POINT point))
+        {
+            return false;
+        }
+
+        var dpi = VisualTreeHelper.GetDpi(window);
+        var tolerance = _configService?.Settings.AutoHideTolerance ?? 10;
+        var left = window.Left * dpi.DpiScaleX - tolerance;
+        var top = window.Top * dpi.DpiScaleY - tolerance;
+        var right = (window.Left + window.ActualWidth) * dpi.DpiScaleX + tolerance;
+        var bottom = (window.Top + window.ActualHeight) * dpi.DpiScaleY + tolerance;
+
+        return point.X >= left && point.X <= right &&
+               point.Y >= top && point.Y <= bottom;
     }
 
     private void ShowDock()
     {
-        if (_mainWindow != null)
+        if (_mainWindow != null && !SuppressPopupsIfNeeded())
         {
             _mainWindow.Show();
             _mainWindow.SlideIn();
+            _mainWindow.ShowLatestWidgetNotificationOnDockTouch();
             _mainWindow.Activate();
         }
     }
@@ -152,8 +233,8 @@ public partial class App : System.Windows.Application
     {
         try
         {
-            var settingsWindow = new SettingsWindow(_configService!, _autoStartService!);
-            if (settingsWindow.ShowDialog() == true)
+            var settingsWindow = _mainWindow?.CreateSettingsWindow(_autoStartService!);
+            if (settingsWindow?.ShowDialog() == true)
             {
                 _mainWindow?.RefreshItems();
                 _mainWindow?.RefreshTools();
@@ -165,26 +246,12 @@ public partial class App : System.Windows.Application
         }
     }
 
-    private void UpdateTrayMenuLanguage()
-    {
-        if (_taskbarIcon?.ContextMenu is System.Windows.Controls.ContextMenu menu)
-        {
-            if (menu.Items[0] is System.Windows.Controls.MenuItem showItem)
-                showItem.Header = Lang.T("Tray.Show");
-            if (menu.Items[1] is System.Windows.Controls.MenuItem settingsItem)
-                settingsItem.Header = Lang.T("Tray.Settings");
-            if (menu.Items[3] is System.Windows.Controls.MenuItem exitItem)
-                exitItem.Header = Lang.T("Tray.Exit");
-            _taskbarIcon.ToolTipText = Lang.T("Tray.ToolTip");
-        }
-    }
-
     private void OnSettingsChanged(string? propertyName)
     {
         switch (propertyName)
         {
             case nameof(AppSettings.Language):
-                UpdateTrayMenuLanguage();
+                UpdateTrayMenu();
                 break;
             case nameof(AppSettings.AutoStart):
                 if (_configService?.Settings.AutoStart == true)
@@ -201,6 +268,9 @@ public partial class App : System.Windows.Application
             case nameof(AppSettings.HotZoneEdgeSize):
                 RecreateHotZoneService();
                 break;
+            case nameof(AppSettings.PopupMode):
+                SuppressPopupsIfNeeded();
+                break;
         }
     }
 
@@ -215,11 +285,11 @@ public partial class App : System.Windows.Application
         _hotZoneService?.Dispose();
 
         _hotZoneService = new HotZoneService(
+            SuppressPopupsIfNeeded,
             _configService.Settings.HotZoneWidth,
             _configService.Settings.HotZoneTriggerDelay,
             _configService.Settings.HotZoneEdgeSize);
         _hotZoneService.HotZoneEntered += OnHotZoneEntered;
-        _hotZoneService.HotZoneLeft += OnHotZoneLeft;
         _hotZoneService.Start();
     }
 

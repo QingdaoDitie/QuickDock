@@ -1,51 +1,16 @@
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Input;
-using QuickDock.Services;
 
 namespace QuickDock.Controls;
 
 public partial class StatusControl : System.Windows.Controls.UserControl
 {
-    public static readonly DependencyProperty StatusServiceProperty =
-        DependencyProperty.Register(
-            nameof(StatusService),
-            typeof(Services.StatusService),
-            typeof(StatusControl),
-            new PropertyMetadata(null, OnStatusServiceChanged));
+    public StatusControl() => InitializeComponent();
 
-    public Services.StatusService? StatusService
+    internal void ShowWidgets(FrameworkElement first, FrameworkElement second)
     {
-        get => (Services.StatusService?)GetValue(StatusServiceProperty);
-        set => SetValue(StatusServiceProperty, value);
-    }
-
-    public StatusControl()
-    {
-        InitializeComponent();
-        ApplyLanguage();
-    }
-
-    private static void OnStatusServiceChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
-    {
-        if (d is StatusControl control && e.NewValue is Services.StatusService service)
-        {
-            control.DataContext = service;
-            control.ApplyLanguage();
-        }
-    }
-
-    private void OnRefreshClick(object sender, MouseButtonEventArgs e)
-    {
-        e.Handled = true;
-        StatusService?.RequestRefresh();
-    }
-
-    private void ApplyLanguage()
-    {
-        WeatherIconText.ToolTip = Lang.T("Status.RefreshWeather");
-        CpuLabelText.Text = "CPU";
-        MemLabelText.Text = "MEM";
-        GpuLabelText.Text = "GPU";
+        FirstWidget.Content = null;
+        SecondWidget.Content = null;
+        FirstWidget.Content = first;
+        SecondWidget.Content = second;
     }
 }

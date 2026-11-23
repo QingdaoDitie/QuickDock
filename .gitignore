@@ -13,3 +13,10 @@ obj/
 *.log
 IconCache/
 config.json
+node_modules/
+dist/
+target/
+.playwright-cli/
+output/playwright/
+/QuickDock.Weather.Private/
+widget-settings/

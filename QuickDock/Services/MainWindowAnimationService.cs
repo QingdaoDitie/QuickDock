@@ -1,11 +1,5 @@
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Media;
 using System.Windows.Media.Animation;
-using System.Windows.Threading;
-using QuickDock.Models;
-
-using WpfSize = System.Windows.Size;
 
 namespace QuickDock.Services;
 
@@ -14,14 +8,14 @@ public class MainWindowAnimationService
     private readonly Window _window;
     private readonly ConfigService _configService;
     private readonly FrameworkElement _mainGrid;
-    private readonly Border _toolsPanel;
-    private readonly Border _dockBorder;
-    private readonly Func<double> _getDockBorderActualWidth;
+    private readonly FrameworkElement _toolsPanelViewport;
+    private readonly FrameworkElement _toolsPanel;
 
     private bool _isHidden = true;
     private bool _isAnimating;
     private bool _hasShownStartupAnimation;
     private bool _isToolsExpanded;
+    private DoubleAnimation? _toolsPanelAnimation;
     private double _baseWindowHeight = 70;
     private const int DesiredFrameRate = 120;
 
@@ -36,16 +30,14 @@ public class MainWindowAnimationService
         Window window,
         ConfigService configService,
         FrameworkElement mainGrid,
-        Border toolsPanel,
-        Border dockBorder,
-        Func<double> getDockBorderActualWidth)
+        FrameworkElement toolsPanelViewport,
+        FrameworkElement toolsPanel)
     {
         _window = window;
         _configService = configService;
         _mainGrid = mainGrid;
+        _toolsPanelViewport = toolsPanelViewport;
         _toolsPanel = toolsPanel;
-        _dockBorder = dockBorder;
-        _getDockBorderActualWidth = getDockBorderActualWidth;
     }
 
     public void ShowStartupAnimation()
@@ -108,11 +100,6 @@ public class MainWindowAnimationService
         AnimationStarted?.Invoke();
         _isAnimating = true;
 
-        if (_isToolsExpanded)
-        {
-            CollapseToolsPanel();
-        }
-
         var scaledHeight = GetScaledHeight();
         var animation = new DoubleAnimation
         {
@@ -130,71 +117,75 @@ public class MainWindowAnimationService
             _isHidden = true;
             _isAnimating = false;
             _window.Hide();
+            _isToolsExpanded = false;
+            SetToolsPanelRestingState();
         };
 
         _window.BeginAnimation(Window.TopProperty, animation);
     }
 
+    public void HideImmediately()
+    {
+        AnimationStarted?.Invoke();
+        _window.BeginAnimation(Window.TopProperty, null);
+        _window.Top = -GetScaledHeight();
+        _isHidden = true;
+        _isAnimating = false;
+        _window.Hide();
+        _isToolsExpanded = false;
+        SetToolsPanelRestingState();
+    }
+
     public void ExpandToolsPanel()
     {
         _isToolsExpanded = true;
-        _toolsPanel.Visibility = Visibility.Visible;
-        _toolsPanel.BeginAnimation(FrameworkElement.HeightProperty, null);
-        _toolsPanel.Height = double.NaN;
-        _toolsPanel.UpdateLayout();
-
-        var targetHeight = MeasureToolsPanelHeight();
-        _toolsPanel.Height = 0;
-
-        var animation = new DoubleAnimation
-        {
-            From = 0,
-            To = targetHeight,
-            Duration = TimeSpan.FromMilliseconds(_configService.Settings.ToolsExpandAnimationDuration),
-            EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut },
-            FillBehavior = FillBehavior.HoldEnd
-        };
-
-        animation.Completed += (s, e) =>
-        {
-            _toolsPanel.BeginAnimation(FrameworkElement.HeightProperty, null);
-            _toolsPanel.Height = targetHeight;
-        };
-
-        _toolsPanel.BeginAnimation(FrameworkElement.HeightProperty, animation);
+        _toolsPanelViewport.Visibility = Visibility.Visible;
+        _toolsPanelViewport.UpdateLayout();
+        var targetHeight = _toolsPanel.ActualHeight;
+        AnimateToolsPanelHeight(targetHeight, _configService.Settings.ToolsExpandAnimationDuration, EasingMode.EaseOut);
     }
 
     public void CollapseToolsPanel()
     {
         _isToolsExpanded = false;
+        AnimateToolsPanelHeight(0, _configService.Settings.ToolsCollapseAnimationDuration, EasingMode.EaseIn);
+    }
 
-        var targetHeight = _toolsPanel.ActualHeight;
-        if (targetHeight <= 0) targetHeight = _baseWindowHeight * _configService.Settings.Scale;
-
-        _toolsPanel.Height = targetHeight;
-
+    private void AnimateToolsPanelHeight(double targetHeight, int duration, EasingMode easingMode)
+    {
+        var currentHeight = _toolsPanelViewport.Height;
         var animation = new DoubleAnimation
         {
-            From = targetHeight,
-            To = 0,
-            Duration = TimeSpan.FromMilliseconds(_configService.Settings.ToolsCollapseAnimationDuration),
-            EasingFunction = new CubicEase { EasingMode = EasingMode.EaseIn },
-            FillBehavior = FillBehavior.HoldEnd
+            From = double.IsNaN(currentHeight) ? _toolsPanelViewport.ActualHeight : currentHeight,
+            To = targetHeight,
+            Duration = TimeSpan.FromMilliseconds(duration),
+            EasingFunction = new CubicEase { EasingMode = easingMode }
         };
 
-        animation.Completed += (s, e) =>
+        Timeline.SetDesiredFrameRate(animation, DesiredFrameRate);
+        animation.Completed += (_, _) =>
         {
-            _toolsPanel.BeginAnimation(FrameworkElement.HeightProperty, null);
-            _toolsPanel.Visibility = Visibility.Collapsed;
-            _toolsPanel.Height = 0;
+            if (_toolsPanelAnimation == animation)
+            {
+                SetToolsPanelRestingState();
+            }
         };
 
-        _toolsPanel.BeginAnimation(FrameworkElement.HeightProperty, animation);
+        _toolsPanelAnimation = animation;
+        _toolsPanelViewport.BeginAnimation(FrameworkElement.HeightProperty, animation);
+    }
+
+    private void SetToolsPanelRestingState()
+    {
+        _toolsPanelAnimation = null;
+        _toolsPanelViewport.Height = _isToolsExpanded ? double.NaN : 0;
+        _toolsPanelViewport.Visibility = _isToolsExpanded ? Visibility.Visible : Visibility.Collapsed;
+        _toolsPanelViewport.BeginAnimation(FrameworkElement.HeightProperty, null);
     }
 
     public double GetScaledHeight()
     {
-        return _baseWindowHeight * _configService.Settings.Scale;
+        return Math.Max(_baseWindowHeight * _configService.Settings.Scale, _mainGrid.ActualHeight);
     }
 
     public void SetHidden(bool hidden)
@@ -202,18 +193,4 @@ public class MainWindowAnimationService
         _isHidden = hidden;
     }
 
-    private double MeasureToolsPanelHeight()
-    {
-        _window.Dispatcher.Invoke(() => { }, DispatcherPriority.Render);
-        var availableWidth = _getDockBorderActualWidth() > 0 ? _getDockBorderActualWidth() : double.PositiveInfinity;
-        _toolsPanel.Measure(new WpfSize(availableWidth, double.PositiveInfinity));
-        var desiredHeight = _toolsPanel.DesiredSize.Height;
-
-        if (desiredHeight <= 0)
-        {
-            desiredHeight = _baseWindowHeight * _configService.Settings.Scale;
-        }
-
-        return desiredHeight;
-    }
 }

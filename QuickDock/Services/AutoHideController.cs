@@ -102,8 +102,8 @@ public class AutoHideController
         var dpiScale = VisualTreeHelper.GetDpi(_window);
         var windowLeft = _window.Left * dpiScale.DpiScaleX;
         var windowRight = (_window.Left + _window.ActualWidth) * dpiScale.DpiScaleX;
-        var windowTop = 0;
-        var windowBottom = (_window.ActualHeight * _configService.Settings.Scale) * dpiScale.DpiScaleY;
+        var windowTop = _window.Top * dpiScale.DpiScaleY;
+        var windowBottom = (_window.Top + _window.ActualHeight) * dpiScale.DpiScaleY;
 
         var tolerance = _configService.Settings.AutoHideTolerance;
         var isMouseOverWindow = point.X >= windowLeft && point.X <= windowRight &&

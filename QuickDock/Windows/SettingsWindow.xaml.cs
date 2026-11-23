@@ -5,8 +5,10 @@ using System.Windows.Media;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Reflection;
+using System.Threading;
 using QuickDock.Models;
 using QuickDock.Services;
+using QuickDock.Widgets;
 
 using WpfColor = System.Windows.Media.Color;
 using WpfColorConverter = System.Windows.Media.ColorConverter;
@@ -28,6 +30,9 @@ public partial class SettingsWindow : Window
     private readonly ConfigService _configService;
     private readonly AutoStartService _autoStartService;
     private readonly ToolsScanService _scanService;
+    private readonly WidgetHost _widgetHost;
+    private WidgetSlots _selectedWidgets;
+    private bool _updatingWidgetChoices;
     private List<DockItem> _items;
     private List<PendingToolFolder> _pendingFolders = new();
     private readonly AppSettings _settingsSnapshot;
@@ -36,6 +41,7 @@ public partial class SettingsWindow : Window
     private readonly bool _autoStartSnapshot;
     private bool _isSaving;
     private bool _isRefreshingLanguageChoices;
+    private static readonly PopupMode[] PopupModes = Enum.GetValues<PopupMode>();
     private bool _isDragging;
     private DockItem? _dragItem;
     private System.Windows.Point _dragStartPoint;
@@ -47,11 +53,13 @@ public partial class SettingsWindow : Window
     private readonly Dictionary<string, StackPanel> _pages = new();
     private readonly Dictionary<string, System.Windows.Controls.Button> _navButtons = new();
 
-    public SettingsWindow(ConfigService configService, AutoStartService autoStartService)
+    internal SettingsWindow(ConfigService configService, AutoStartService autoStartService, WidgetHost widgetHost)
     {
         _configService = configService;
         _autoStartService = autoStartService;
         _scanService = new ToolsScanService();
+        _widgetHost = widgetHost;
+        _selectedWidgets = configService.Settings.Widgets;
         _settingsSnapshot = _configService.Settings.Clone();
         _items = new List<DockItem>(_configService.Items);
         
@@ -118,14 +126,14 @@ public partial class SettingsWindow : Window
         ToolsCollapseAnimationSlider.Value = _configService.Settings.ToolsCollapseAnimationDuration;
         ToolsCollapseAnimationValue.Text = $"{_configService.Settings.ToolsCollapseAnimationDuration}ms";
 
+
+
+
         StartupPreviewSlider.Value = _configService.Settings.StartupPreviewDuration;
         StartupPreviewValue.Text = $"{_configService.Settings.StartupPreviewDuration}ms";
         
         ShowStatusBarCheckBox.IsChecked = _configService.Settings.ShowStatusBar;
-        WeatherCityTextBox.Text = _configService.Settings.WeatherCity;
 
-        WeatherRefreshSlider.Value = _configService.Settings.WeatherRefreshIntervalMinutes;
-        WeatherRefreshValue.Text = $"{_configService.Settings.WeatherRefreshIntervalMinutes}m";
 
         ResourceRefreshSlider.Value = _configService.Settings.ResourceRefreshIntervalSeconds;
         ResourceRefreshValue.Text = $"{_configService.Settings.ResourceRefreshIntervalSeconds}s";
@@ -195,11 +203,12 @@ public partial class SettingsWindow : Window
         AboutSubtitle.Text = Lang.T("Settings.AboutSubtitle");
         
         LanguageLabel.Text = Lang.T("Settings.Language");
+        PopupModeLabel.Text = Lang.T("Settings.PopupMode");
+        PopupModeDescription.Text = Lang.T("Settings.PopupMode.Description");
         AutoStartTitleText.Text = Lang.T("Settings.AutoStartTitle");
         AutoStartDescText.Text = Lang.T("Settings.AutoStartDesc");
-        ShowStatusBarLabel.Text = Lang.T("Settings.StatusBar");
-        WeatherCityLabel.Text = Lang.T("Settings.WeatherCity");
-        WeatherRefreshLabel.Text = Lang.T("Settings.WeatherRefresh");
+        ShowStatusBarLabel.Text = Lang.T("Settings.Widgets");
+        UpdateWidgetChoices();
         ResourceRefreshLabel.Text = Lang.T("Settings.ResourceRefresh");
         
         BackgroundColorLabel.Text = Lang.T("Settings.Background");
@@ -248,6 +257,8 @@ public partial class SettingsWindow : Window
             LanguageComboBox.Items.Add(Lang.T("Settings.Language.zh"));
             LanguageComboBox.Items.Add(Lang.T("Settings.Language.en"));
             LanguageComboBox.SelectedIndex = selectedIndex;
+            PopupModeComboBox.ItemsSource = PopupModes.Select(mode => Lang.T($"Settings.PopupMode.{mode}")).ToArray();
+            PopupModeComboBox.SelectedIndex = Array.IndexOf(PopupModes, _configService.Settings.PopupMode);
         }
         finally
         {
@@ -260,6 +271,12 @@ public partial class SettingsWindow : Window
         if (!_initialized || _isRefreshingLanguageChoices) return;
         _configService.Settings.Language = LanguageComboBox.SelectedIndex == 0 ? "zh" : "en";
         ApplyLanguage();
+    }
+
+    private void OnPopupModeChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (!_initialized || _isRefreshingLanguageChoices || PopupModeComboBox.SelectedIndex < 0) return;
+        _configService.Settings.PopupMode = PopupModes[PopupModeComboBox.SelectedIndex];
     }
 
     private void OnAutoStartClick(object sender, MouseButtonEventArgs e)
@@ -463,18 +480,55 @@ public partial class SettingsWindow : Window
         _configService.Settings.ShowStatusBar = ShowStatusBarCheckBox.IsChecked == true;
     }
 
-    private void OnWeatherCityChanged(object sender, TextChangedEventArgs e)
+    private void UpdateWidgetChoices()
     {
-        if (!_initialized) return;
-        _configService.Settings.WeatherCity = WeatherCityTextBox.Text;
+        _updatingWidgetChoices = true;
+        var options = Enum.GetValues<WidgetKind>()
+            .Select(kind => new WidgetChoice(kind, _widgetHost.GetLabel(kind)))
+            .ToArray();
+        FirstWidgetLabel.Text = Lang.T("Settings.WidgetFirst");
+        SecondWidgetLabel.Text = Lang.T("Settings.WidgetSecond");
+        FirstWidgetSettingsButton.Content = SecondWidgetSettingsButton.Content = Lang.T("Settings.WidgetConfigure");
+        FirstWidgetBox.ItemsSource = SecondWidgetBox.ItemsSource = options;
+        ApplyWidgetChoices();
+        _updatingWidgetChoices = false;
     }
 
-    private void OnWeatherRefreshChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+    private void ApplyWidgetChoices()
     {
-        if (!_initialized || WeatherRefreshValue == null) return;
-        _configService.Settings.WeatherRefreshIntervalMinutes = (int)Math.Round(WeatherRefreshSlider.Value);
-        WeatherRefreshValue.Text = $"{_configService.Settings.WeatherRefreshIntervalMinutes}m";
+        FirstWidgetBox.SelectedValue = _selectedWidgets.First;
+        SecondWidgetBox.SelectedValue = _selectedWidgets.Second;
+        FirstWidgetSettingsButton.Visibility = _widgetHost.CanConfigure(_selectedWidgets.First) ? Visibility.Visible : Visibility.Hidden;
+        SecondWidgetSettingsButton.Visibility = _widgetHost.CanConfigure(_selectedWidgets.Second) ? Visibility.Visible : Visibility.Hidden;
     }
+
+    private void OnWidgetSelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (!_initialized || _updatingWidgetChoices) return;
+
+        if (ReferenceEquals(sender, FirstWidgetBox) && FirstWidgetBox.SelectedValue is WidgetKind first)
+        {
+            var second = first == _selectedWidgets.Second ? _selectedWidgets.First : _selectedWidgets.Second;
+            _selectedWidgets = new WidgetSlots(first, second);
+        }
+        else if (ReferenceEquals(sender, SecondWidgetBox) && SecondWidgetBox.SelectedValue is WidgetKind second)
+        {
+            var firstSlot = second == _selectedWidgets.First ? _selectedWidgets.Second : _selectedWidgets.First;
+            _selectedWidgets = new WidgetSlots(firstSlot, second);
+        }
+
+        _updatingWidgetChoices = true;
+        ApplyWidgetChoices();
+        _updatingWidgetChoices = false;
+    }
+
+    private void OnWidgetSettingsClick(object sender, RoutedEventArgs e)
+    {
+        var kind = ReferenceEquals(sender, FirstWidgetSettingsButton) ? _selectedWidgets.First : _selectedWidgets.Second;
+        _widgetHost.Configure(kind, this);
+    }
+
+    private sealed record WidgetChoice(WidgetKind Kind, string Label);
 
     private void OnResourceRefreshChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
     {
@@ -614,6 +668,7 @@ public partial class SettingsWindow : Window
 
     private void OnSaveClick(object sender, RoutedEventArgs e)
     {
+        _configService.Settings.Widgets = _selectedWidgets;
         _configService.Settings.BackgroundColor = BackgroundColorTextBox.Text;
         _configService.Settings.ToolsEnabled = ToolsEnabledCheckBox.IsChecked == true;
         _configService.Settings.ToolsRootPath = ToolsRootPathTextBox.Text;
@@ -637,6 +692,7 @@ public partial class SettingsWindow : Window
 
     protected override void OnClosing(CancelEventArgs e)
     {
+
         if (!_isSaving)
         {
             _configService.Settings.CopyFrom(_settingsSnapshot);

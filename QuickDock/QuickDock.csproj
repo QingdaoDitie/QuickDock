@@ -2,7 +2,8 @@
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net8.0-windows</TargetFramework>
+    <TargetFramework>net8.0-windows10.0.17763.0</TargetFramework>
+    <WindowsSdkPackageVersion>10.0.17763.57</WindowsSdkPackageVersion>
     <Nullable>enable</Nullable>
     <UseWPF>true</UseWPF>
     <UseWindowsForms>true</UseWindowsForms>
@@ -12,9 +13,9 @@
     <ApplicationIcon>Assets\app.ico</ApplicationIcon>
     <DebugType>none</DebugType>
     <DebugSymbols>false</DebugSymbols>
-    <Version>1.1.0</Version>
-    <AssemblyVersion>1.1.0.0</AssemblyVersion>
-    <FileVersion>1.1.0.0</FileVersion>
+    <Version>1.2.0</Version>
+    <AssemblyVersion>1.2.0.0</AssemblyVersion>
+    <FileVersion>1.2.0.0</FileVersion>
   </PropertyGroup>
 
   <ItemGroup>
@@ -30,6 +31,24 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <Link>icons\%(RecursiveDir)%(Filename)%(Extension)</Link>
     </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\QuickDock.WidgetContracts\QuickDock.WidgetContracts.csproj" />
+    <Content Include="Widgets\ClaudeQuotaStatusLine.ps1" CopyToOutputDirectory="PreserveNewest"
+             CopyToPublishDirectory="PreserveNewest" ExcludeFromSingleFile="true" />
+  </ItemGroup>
+
+  <PropertyGroup Condition="'$(IncludePrivateWeather)' != 'false' and Exists('..\QuickDock.Weather.Private\QuickDock.Weather.csproj')">
+    <ShouldUnsetParentConfigurationAndPlatform>false</ShouldUnsetParentConfigurationAndPlatform>
+  </PropertyGroup>
+
+  <ItemGroup Condition="'$(IncludePrivateWeather)' != 'false' and Exists('..\QuickDock.Weather.Private\QuickDock.Weather.csproj')">
+    <ProjectReference Include="..\QuickDock.Weather.Private\QuickDock.Weather.csproj" ReferenceOutputAssembly="false" Private="false"
+                      GlobalPropertiesToRemove="RuntimeIdentifier;SelfContained;PublishSingleFile;PublishAot;PublishTrimmed" />
+    <Content Include="..\QuickDock.Weather.Private\bin\$(Configuration)\net8.0-windows\QuickDock.Weather.dll"
+             Link="Widgets\QuickDock.Weather.dll" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest"
+             ExcludeFromSingleFile="true" />
   </ItemGroup>
 
 </Project>
